@@ -1,0 +1,10 @@
+{
+  "id": "recovery-engine",
+  "name": "Recovery Engine",
+  "version": "1.0.0",
+  "minAppVersion": "1.7.2",
+  "description": "A customizable study review and recovery system with Jalali date support, flexible scheduling, and checklists.",
+  "author": "Amin Sedghi",
+  "authorUrl": "https://github.com/sedghimohammadamin",
+  "isDesktopOnly": true
+}
