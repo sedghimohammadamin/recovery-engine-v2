@@ -1,0 +1,22 @@
+{
+  "name": "recovery-engine",
+  "version": "0.1.0",
+  "description": "Recovery Engine Obsidian plugin",
+  "main": "main.js",
+  "scripts": {
+    "dev": "esbuild src/main.ts --bundle --external:obsidian --external:child_process --external:fs --external:path --external:os --external:child_process --external:fs --external:path --external:os --format=cjs --target=es2018 --outfile=main.js --watch",
+    "build": "esbuild src/main.ts --bundle --external:obsidian --external:child_process --external:fs --external:path --external:os --external:child_process --external:fs --external:path --external:os --format=cjs --target=es2018 --minify --outfile=main.js"
+  },
+  "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/parser": "^8.71.2",
+    "esbuild": "^0.20.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-obsidianmd": "^0.4.2",
+    "obsidian": "latest",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.71.2"
+  }
+}
