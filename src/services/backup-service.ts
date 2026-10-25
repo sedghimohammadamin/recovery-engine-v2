@@ -6,21 +6,28 @@ export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promis
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".json,application/json";
-  
-  // استایل‌دهی برای مخفی کردن بصری بدون حذف از DOM
-  input.style.position = "absolute";
-  input.style.left = "-9999px";
+
+  // استایل: input را کاملاً روی دکمه‌ای که کاربر کلیک می‌کند قرار می‌دهیم
+  // تا کلیک کاربر مستقیماً روی خود input بیفتد (حل مشکل user activation)
+  input.style.position = "fixed";
+  input.style.top = "0";
+  input.style.left = "0";
+  input.style.width = "100vw";
+  input.style.height = "100vh";
   input.style.opacity = "0";
-  input.style.pointerEvents = "none";
+  input.style.zIndex = "9999";
+  input.style.cursor = "pointer";
 
   document.body.appendChild(input);
 
+  // به محض اینکه کاربر روی input کلیک کند و فایل انتخاب کند:
   input.onchange = async () => {
     const file = input.files?.[0];
-    if (!file) {
-      document.body.removeChild(input);
-      return;
-    }
+    
+    // پاک‌سازی فوری input از صفحه
+    document.body.removeChild(input);
+
+    if (!file) return;
 
     try {
       const text = await file.text();
@@ -28,21 +35,16 @@ export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promis
 
       if (!parsed || !Array.isArray(parsed.items)) {
         new Notice("فایل پشتیبان معتبر نیست.");
-        document.body.removeChild(input);
         return;
       }
 
       const current = await plugin.exportData();
       const confirmed = confirm(
-        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟ نسخهٔ فعلی در فایل پشتیبان خودکار ذخیره می‌شود.`
+        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟`
       );
 
-      if (!confirmed) {
-        document.body.removeChild(input);
-        return;
-      }
+      if (!confirmed) return;
 
-      // دانلود نسخهٔ فعلی
       const blob = new Blob([JSON.stringify(current, null, 2)], {
         type: "application/json",
       });
@@ -62,11 +64,15 @@ export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promis
     } catch (e) {
       console.error(e);
       new Notice("خطا در خواندن فایل پشتیبان.");
-    } finally {
-      document.body.removeChild(input);
     }
   };
 
-  // اجرای click
-  input.click();
+  // اگر کاربر روی جای دیگری کلیک کرد و فایلی انتخاب نکرد، input را پاک کن
+  input.onblur = () => {
+    setTimeout(() => {
+      if (document.body.contains(input)) {
+        document.body.removeChild(input);
+      }
+    }, 300);
+  };
 }
