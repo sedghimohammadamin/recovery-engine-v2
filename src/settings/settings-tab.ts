@@ -284,9 +284,38 @@ export class RecoverySettingsTab extends PluginSettingTab {
         })
       );
 
-    new Setting(containerEl).setName("بازیابی از فایل").addButton((b) =>
-      b.setButtonText("انتخاب فایل").onClick(() => importBackupFromFile(this.plugin))
-    );
+    // بازیابی از فایل — با input داخل DOM (بدون تأخیر و با user activation درست)
+    const restoreBox = containerEl.createDiv({ cls: "re-restore-box" });
+    restoreBox.setCssStyles({ marginTop: "12px" });
+    
+    const restoreNote = restoreBox.createEl("p", {
+      text: "فایل JSON پشتیبان را انتخاب کنید تا جایگزین اطلاعات فعلی شود.",
+    });
+    restoreNote.setCssStyles({ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px" });
+
+    // input از قبل ساخته و در DOM قرار می‌گیرد
+    const fileInput = restoreBox.createEl("input", {
+      attr: { type: "file", accept: ".json,application/json" },
+    });
+    fileInput.setCssStyles({ display: "none" });
+
+    fileInput.addEventListener("change", async () => {
+      const f = fileInput.files?.[0];
+      if (!f) return;
+      try {
+        await importBackupFromFile(this.plugin, f);
+      } finally {
+        fileInput.value = ""; // reset برای انتخاب مجدد
+      }
+    });
+
+    const restoreBtn = restoreBox.createEl("button", {
+      text: "📂 انتخاب فایل پشتیبان",
+      cls: "mod-cta",
+    });
+    restoreBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
   }
 
   private renderSubject(containerEl: HTMLElement, subj: Subject, idx: number) {
