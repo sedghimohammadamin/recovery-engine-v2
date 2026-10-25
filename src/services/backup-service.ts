@@ -1,63 +1,55 @@
-import { App, Notice } from "obsidian";
+import { Notice } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 
-export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promise<void> {
-  // ساخت input در لحظه (نه از قبل)
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json,application/json";
-  
-  // مخفی کردن با استایل‌های سبک
-  input.style.display = "none";
-  
-  // اضافه کردن به body
-  document.body.appendChild(input);
-
-  // تعریف onchange
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    document.body.removeChild(input);
+export async function importBackupFromFile(
+  plugin: RecoveryEnginePlugin,
+  file: File
+): Promise<void> {
+  console.log("[Backup] فایل انتخاب شد:", file.name, file.size);
+  try {
+    const text = await file.text();
+    console.log("[Backup] طول متن:", text.length);
     
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-
-      if (!parsed || !Array.isArray(parsed.items)) {
-        new Notice("فایل پشتیبان معتبر نیست.");
-        return;
-      }
-
-      const current = await plugin.exportData();
-      const confirmed = confirm(
-        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟`
-      );
-
-      if (!confirmed) return;
-
-      const blob = new Blob([JSON.stringify(current, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `recovery-engine-pre-restore-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      await plugin.replaceAllData({
-        settings: parsed.settings,
-        items: parsed.items,
-      });
-
-      new Notice("پشتیبان بازیابی شد.");
-    } catch (e) {
-      console.error(e);
-      new Notice("خطا در خواندن فایل پشتیبان.");
+    const parsed = JSON.parse(text);
+    console.log("[Backup] ساختار JSON:", Object.keys(parsed));
+    
+    if (!parsed || !Array.isArray(parsed.items)) {
+      console.error("[Backup] فایل معتبر نیست:", parsed);
+      new Notice("فایل پشتیبان معتبر نیست (آرایه items پیدا نشد).");
+      return;
     }
-  };
+    console.log("[Backup] تعداد آیتم‌ها:", parsed.items.length);
 
-  // کلیک فوری در همان لحظه
-  input.click();
+    const current = await plugin.exportData();
+    console.log("[Backup] تعداد آیتم‌های فعلی:", (current as any).items.length);
+
+    const confirmed = confirm(
+      `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟`
+    );
+    console.log("[Backup] تایید کاربر:", confirmed);
+    
+    if (!confirmed) return;
+
+    // دانلود نسخهٔ فعلی
+    const blob = new Blob([JSON.stringify(current, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `recovery-engine-pre-restore-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    await plugin.replaceAllData({
+      settings: parsed.settings,
+      items: parsed.items,
+    });
+    console.log("[Backup] replaceAllData اجرا شد.");
+
+    new Notice("پشتیبان بازیابی شد.");
+  } catch (e) {
+    console.error("[Backup] خطا:", e);
+    new Notice("خطا در خواندن فایل پشتیبان. کنسول را ببین.");
+  }
 }
