@@ -2,31 +2,22 @@ import { App, Notice } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 
 export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promise<void> {
-  // ساخت input
+  // ساخت input در لحظه (نه از قبل)
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".json,application/json";
-
-  // استایل: input را کاملاً روی دکمه‌ای که کاربر کلیک می‌کند قرار می‌دهیم
-  // تا کلیک کاربر مستقیماً روی خود input بیفتد (حل مشکل user activation)
-  input.style.position = "fixed";
-  input.style.top = "0";
-  input.style.left = "0";
-  input.style.width = "100vw";
-  input.style.height = "100vh";
-  input.style.opacity = "0";
-  input.style.zIndex = "9999";
-  input.style.cursor = "pointer";
-
+  
+  // مخفی کردن با استایل‌های سبک
+  input.style.display = "none";
+  
+  // اضافه کردن به body
   document.body.appendChild(input);
 
-  // به محض اینکه کاربر روی input کلیک کند و فایل انتخاب کند:
+  // تعریف onchange
   input.onchange = async () => {
     const file = input.files?.[0];
-    
-    // پاک‌سازی فوری input از صفحه
     document.body.removeChild(input);
-
+    
     if (!file) return;
 
     try {
@@ -67,12 +58,6 @@ export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promis
     }
   };
 
-  // اگر کاربر روی جای دیگری کلیک کرد و فایلی انتخاب نکرد، input را پاک کن
-  input.onblur = () => {
-    setTimeout(() => {
-      if (document.body.contains(input)) {
-        document.body.removeChild(input);
-      }
-    }, 300);
-  };
+  // کلیک فوری در همان لحظه
+  input.click();
 }
