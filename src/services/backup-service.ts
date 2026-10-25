@@ -2,54 +2,47 @@ import { Notice } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 
 export async function importBackupFromFile(
-  plugin: RecoveryEnginePlugin,
-  file: File
+  plugin: RecoveryEnginePlugin
 ): Promise<void> {
-  console.log("[Backup] فایل انتخاب شد:", file.name, file.size);
-  try {
-    const text = await file.text();
-    console.log("[Backup] طول متن:", text.length);
-    
-    const parsed = JSON.parse(text);
-    console.log("[Backup] ساختار JSON:", Object.keys(parsed));
-    
-    if (!parsed || !Array.isArray(parsed.items)) {
-      console.error("[Backup] فایل معتبر نیست:", parsed);
-      new Notice("فایل پشتیبان معتبر نیست (آرایه items پیدا نشد).");
-      return;
+  const input = createEl("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed || !Array.isArray(parsed.items)) {
+        new Notice("فایل پشتیبان معتبر نیست.");
+        return;
+      }
+      // نگه‌داری نسخهٔ فعلی
+      const current = await plugin.exportData();
+      const confirmed = confirm(
+        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current).items.length} مطلب) شود؟ نسخهٔ فعلی در فایل پشتیبان خودکار ذخیره می‌شود.`
+      );
+      if (!confirmed) return;
+      // دانلود نسخهٔ فعلی به‌عنوان پشتیبان
+      const blob = new Blob([JSON.stringify(current, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = createEl("a");
+      a.href = url;
+      a.download = `recovery-engine-pre-restore-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      await plugin.replaceAllData({
+        settings: parsed.settings,
+        items: parsed.items,
+      });
+      new Notice("پشتیبان بازیابی شد.");
+    } catch (e) {
+      console.error(e);
+      new Notice("خطا در خواندن فایل پشتیبان.");
     }
-    console.log("[Backup] تعداد آیتم‌ها:", parsed.items.length);
-
-    const current = await plugin.exportData();
-    console.log("[Backup] تعداد آیتم‌های فعلی:", (current as any).items.length);
-
-    const confirmed = confirm(
-      `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟`
-    );
-    console.log("[Backup] تایید کاربر:", confirmed);
-    
-    if (!confirmed) return;
-
-    // دانلود نسخهٔ فعلی
-    const blob = new Blob([JSON.stringify(current, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `recovery-engine-pre-restore-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    await plugin.replaceAllData({
-      settings: parsed.settings,
-      items: parsed.items,
-    });
-    console.log("[Backup] replaceAllData اجرا شد.");
-
-    new Notice("پشتیبان بازیابی شد.");
-  } catch (e) {
-    console.error("[Backup] خطا:", e);
-    new Notice("خطا در خواندن فایل پشتیبان. کنسول را ببین.");
-  }
+  };
+  input.click();
 }

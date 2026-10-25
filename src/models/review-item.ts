@@ -10,6 +10,8 @@ export interface ReviewSession {
   completedAt: string | null;
   notes: string;
   checklistDone?: string[];
+  /** تا این تاریخ (YYYY-MM-DD) از داشبورد پنهان است */
+  snoozedUntil?: string | null;
 }
 
 export interface HistoryEvent {

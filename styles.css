@@ -1,78 +1,287 @@
+/* ========================================================
+   RECOVERY ENGINE — CLEAN MODERN FLAT UI
+   ======================================================== */
+
 .recovery-engine-dashboard {
   direction: rtl;
-  padding: 12px;
-  font-family: var(--font-interface);
+  padding: 24px;
+  font-family: var(--font-interface), "Vazirmatn", sans-serif;
+  color: var(--text-normal);
+  max-width: 1100px;
+  margin: 0 auto;
+  background: var(--background-primary);
 }
+
+/* هدر */
 .re-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
 }
-.re-header h2 { margin: 0; }
+
+.re-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
 .re-header button {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
+
+.re-header button:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* آمار */
 .re-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
+
 .re-stat {
   background: var(--background-secondary);
-  padding: 10px;
-  border-radius: 8px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--background-modifier-border);
   text-align: center;
 }
-.re-stat-num { font-size: 22px; font-weight: 700; }
-.re-stat-label { font-size: 12px; opacity: 0.8; }
-.re-section { margin-bottom: 20px; }
-.re-section h3 { margin: 0 0 8px; font-size: 15px; }
-.re-empty { opacity: 0.6; font-size: 13px; }
+
+.re-stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-normal);
+  margin-bottom: 4px;
+}
+
+.re-stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* بخش‌ها */
+.re-section {
+  margin-bottom: 24px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.re-section h3 {
+  margin: 0;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.re-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+/* جدول */
 .re-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
-.re-table th, .re-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
+
+.re-table th {
+  padding: 12px;
   text-align: right;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
 }
-.re-table th { font-weight: 600; opacity: 0.8; }
+
+.re-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.re-table tr:last-child td {
+  border-bottom: none;
+}
+
+.re-table tr:hover td {
+  background: var(--background-secondary);
+}
+
 .re-table button {
-  margin-left: 4px;
-  padding: 3px 8px;
-  border-radius: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.re-table button:hover {
+  background: var(--background-secondary);
+}
+
+/* مودال چک‌لیست */
+.re-checklist-modal {
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.re-checklist-content {
+  padding: 24px;
+  direction: rtl;
+  /* اسکرول در صورت زیاد بودن آیتم‌ها */
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.re-checklist-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.re-checklist-sub {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.re-checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.re-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--background-secondary);
+  border-radius: 12px;
   cursor: pointer;
 }
-.re-table button:hover { background: var(--background-secondary); }
 
-/* Detail modal resize */
+.re-checklist-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--interactive-accent);
+  cursor: pointer;
+}
+
+.re-checklist-text {
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+.re-checklist-footer {
+  padding: 16px 24px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.re-checklist-footer button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.re-checklist-footer button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.re-checklist-footer button.mod-cta:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* مودال جزئیات */
 .re-detail-modal {
-  padding: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
 }
-.re-detail-modal .modal-content {
-  margin: 0;
+
+.re-detail-content {
+  padding: 24px;
+  direction: rtl;
+  /* مهم: اسکرول */
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(90vh - 60px);
 }
-.re-detail-modal .modal-close-button {
-  z-index: 10;
+
+.re-detail-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
+
+.re-source-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding: 12px 16px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+}
+
+.re-source-row button {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.re-detail-footer {
+  padding: 16px 0 0;
+}
+
+/* دستگیره ریسایز مودال جزئیات */
 .re-resize-handle {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   cursor: nwse-resize;
   z-index: 20;
   background:
@@ -80,51 +289,141 @@
     linear-gradient(135deg, transparent 65%, var(--interactive-accent) 65%, var(--interactive-accent) 70%, transparent 70%);
   opacity: 0.5;
 }
-.re-resize-handle:hover { opacity: 1; }
 
-/* Custom notice with actions */
-.re-notice-title {
-  font-weight: 700;
-  margin-bottom: 4px;
+.re-resize-handle:hover {
+  opacity: 1;
 }
-.re-notice-body {
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-.re-notice-actions {
+
+/* تقویم */
+.re-cal-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 6px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
-/* Custom notice with actions */
-.re-notice-title {
+.re-cal-header h3 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 16px;
   font-weight: 700;
-  margin-bottom: 4px;
 }
-.re-notice-body {
-  font-size: 13px;
-  margin-bottom: 8px;
+
+.re-cal-header button {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-normal);
 }
-.re-notice-actions {
-  display: flex;
-  justify-content: flex-end;
+
+.re-cal-header button:hover {
+  background: var(--background-modifier-hover);
+}
+
+.re-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 6px;
-  margin-top: 6px;
 }
 
-/* Checklist modal */
-.re-checklist-modal { width: min(560px, 92vw); height: min(520px, 80vh); display: flex; flex-direction: column; }
-.re-checklist-content { flex: 1; overflow-y: auto; padding: 12px 18px; }
-.re-checklist-sub { opacity: 0.8; margin-bottom: 12px; }
-.re-checklist-list { display: flex; flex-direction: column; gap: 10px; }
-.re-checklist-row { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 8px; border-radius: 6px; background: var(--background-secondary); }
-.re-checklist-text { font-size: 14px; }
-.re-checklist-footer { border-top: 1px solid var(--background-modifier-border); padding: 12px 18px; display: flex; justify-content: flex-end; gap: 8px; background: var(--background-primary); }
+.re-cal-dow {
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 8px;
+  color: var(--text-muted);
+}
 
-/* Detail modal */
-.re-detail-modal { width: 700px; height: 600px; max-width: 95vw; max-height: 92vh; display: flex; flex-direction: column; }
-.re-detail-content { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
-.re-source-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; }
-.re-detail-footer { padding-bottom: 12px; }
+.re-cal-cell {
+  min-height: 70px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  position: relative;
+}
+
+.re-cal-cell:hover {
+  background: var(--background-modifier-hover);
+}
+
+.re-cal-cell.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.re-cal-cell.has-pending {
+  border-color: var(--text-error);
+}
+
+.re-cal-day {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-normal);
+}
+
+.re-cal-count {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.re-cal-details {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+/* تنظیمات */
+.re-subject-box {
+  background: var(--background-secondary);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+/* فیلتر */
+.re-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 14px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.re-filter-bar input, .re-filter-bar select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+.re-filter-bar input:focus, .re-filter-bar select:focus {
+  border-color: var(--interactive-accent);
+}

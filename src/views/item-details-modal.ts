@@ -43,35 +43,114 @@ export class ItemDetailsModal extends Modal {
   }
 
   onOpen() {
-    const { contentEl, modalEl } = this;
-    contentEl.empty();
-    contentEl.setAttr("dir", "rtl");
+    const { modalEl } = this;
+    modalEl.empty();
 
+    // ۱. تنظیمات مودال
     modalEl.addClass("re-detail-modal");
-    contentEl.addClass("re-detail-content");
+    modalEl.setCssStyles({
+      width: "700px",
+      height: "600px",
+      maxWidth: "95vw",
+      maxHeight: "92vh",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      padding: "0",
+      overflow: "hidden"
+    });
 
+    // ۲. ساخت wrapper اصلی
+    const wrapper = modalEl.createEl("div");
+    wrapper.setCssStyles({
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+      height: "100%",
+      position: "relative"
+    });
+
+    // ۳. بخش محتوا (اسکرول‌شونده)
+    const body = wrapper.createEl("div", { cls: "re-detail-content" });
+    body.setCssStyles({
+      flex: "1",
+      overflowY: "auto",
+      padding: "24px",
+      direction: "rtl"
+    });
+
+    // ۴. فوتر ثابت (بیرون از اسکرول)
+    const footer = wrapper.createEl("div", { cls: "re-detail-footer" });
+    footer.setCssStyles({
+      padding: "16px 24px",
+      background: "var(--background-secondary)",
+      borderTop: "1px solid var(--background-modifier-border)",
+      flexShrink: "0",
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: "10px"
+    });
+
+    // ۵. دستگیرهٔ ریسایز
+    const handle = modalEl.createEl("div", { cls: "re-resize-handle" });
+    let resizing = false;
+    let startX = 0, startY = 0, startW = 0, startH = 0;
+
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      resizing = true;
+      startX = e.clientX; startY = e.clientY;
+      const rect = modalEl.getBoundingClientRect();
+      startW = rect.width; startH = rect.height;
+      document.body.style.cursor = "nwse-resize";
+    });
+
+    const onMove = (e: MouseEvent) => {
+      if (!resizing) return;
+      const dx = startX - e.clientX;
+      const dy = e.clientY - startY;
+      const newW = Math.max(450, Math.min(window.innerWidth * 0.95, startW + dx));
+      const newH = Math.max(350, Math.min(window.innerHeight * 0.92, startH + dy));
+      modalEl.style.width = `${newW}px`;
+      modalEl.style.height = `${newH}px`;
+    };
+
+    const onUp = () => {
+      if (!resizing) return;
+      resizing = false;
+      document.body.style.cursor = "";
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    (this as any)._cleanupResize = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    // ============ محتوا ============
     const subject = this.plugin.settings.subjects.find((s) => s.id === this.item.subjectId);
-    contentEl.createEl("h2", { text: this.item.title });
-    contentEl.createEl("p", {
+    body.createEl("h2", { text: this.item.title });
+    body.createEl("p", {
       text: `درس: ${subject?.name ?? "—"} | تاریخ یادگیری: ${this.fmt(this.item.learnedAt)}`,
     });
 
     if (this.item.source) {
-      const row = contentEl.createDiv({ cls: "re-source-row" });
-      row.createSpan({ text: "منبع:" });
+      const row = body.createEl("div", { cls: "re-source-row" });
+      row.createEl("span", { text: "منبع:" });
       const openBtn = row.createEl("button", { text: "باز کردن" });
       openBtn.onclick = () => this.openSource(this.item.source);
     }
 
-    const rangeFrom = (this.item as unknown).rangeFrom ?? "";
-    const rangeTo = (this.item as unknown).rangeTo ?? "";
+    const rangeFrom = (this.item as any).rangeFrom ?? "";
+    const rangeTo = (this.item as any).rangeTo ?? "";
     if (rangeFrom || rangeTo) {
-      contentEl.createEl("p", { text: `محدوده: ${rangeFrom || "?"} تا ${rangeTo || "?"}` });
+      body.createEl("p", { text: `محدوده: ${rangeFrom || "?"} تا ${rangeTo || "?"}` });
     }
-    if (this.item.notes) contentEl.createEl("p", { text: `یادداشت: ${this.item.notes}` });
+    if (this.item.notes) body.createEl("p", { text: `یادداشت: ${this.item.notes}` });
 
-    contentEl.createEl("h3", { text: "برنامهٔ مرور" });
-    const table = contentEl.createEl("table", { cls: "re-table" });
+    body.createEl("h3", { text: "برنامهٔ مرور" });
+    const table = body.createEl("table", { cls: "re-table" });
     const head = table.createEl("tr");
     ["مرحله", "موعد", "وضعیت", "تاریخ انجام", "عملیات"].forEach((h) => head.createEl("th", { text: h }));
     for (const r of this.item.reviews) {
@@ -93,6 +172,15 @@ export class ItemDetailsModal extends Modal {
             this.onChange();
             this.onOpen();
           }).open();
+
+        const snoozeBtn = ops.createEl("button", { text: "فردا" });
+        snoozeBtn.onclick = async () => {
+          snoozeReview(this.item, r.id, 1);
+          await this.plugin.saveItem(this.item);
+          new Notice("به فردا موکول شد.");
+          this.onChange();
+          this.onOpen();
+        };
       } else {
         const btn = ops.createEl("button", { text: "بازگرداندن" });
         btn.onclick = async () => {
@@ -112,15 +200,15 @@ export class ItemDetailsModal extends Modal {
       };
     }
 
-    contentEl.createEl("h3", { text: "تاریخچه" });
-    const hist = contentEl.createEl("ul");
+    body.createEl("h3", { text: "تاریخچه" });
+    const hist = body.createEl("ul");
     this.item.history.slice().reverse().forEach((h) =>
       hist.createEl("li", {
         text: `${this.fmt(h.at.slice(0, 10))} — ${h.type}${h.detail ? ` (${h.detail})` : ""}`,
       })
     );
 
-    const footer = contentEl.createDiv({ cls: "re-detail-footer" });
+    // فوتر
     new Setting(footer)
       .addButton((b) => b.setButtonText("ویرایش").onClick(() =>
         new EditItemModal(this.app, this.plugin, this.item, () => { this.onChange(); this.onOpen(); }).open()

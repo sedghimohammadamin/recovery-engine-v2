@@ -1,11 +1,12 @@
 import { ReviewItem, ReviewSession, ReviewKind } from "../models/review-item";
-import { todayISO } from "../core/date-utils";
+import { todayISO, addDays } from "../core/date-utils";
 
 export interface DueBuckets {
   today: { item: ReviewItem; review: ReviewSession }[];
   overdue: { item: ReviewItem; review: ReviewSession; daysLate: number }[];
   upcoming: { item: ReviewItem; review: ReviewSession; daysAhead: number }[];
   completedToday: { item: ReviewItem; review: ReviewSession }[];
+  snoozed: { item: ReviewItem; review: ReviewSession; untilDate: string }[];
 }
 
 function kindOrder(kind: ReviewKind): number {
@@ -17,7 +18,7 @@ function kindOrder(kind: ReviewKind): number {
   }
 }
 
-function compareByDueAndKind(a: unknown, b: unknown): number {
+function compareByDueAndKind(a: any, b: any): number {
   if (a.review.dueDate !== b.review.dueDate) {
     return a.review.dueDate < b.review.dueDate ? -1 : 1;
   }
@@ -32,7 +33,7 @@ export function computeBuckets(
   upcomingWindowDays: number
 ): DueBuckets {
   const today = todayISO();
-  const result: DueBuckets = { today: [], overdue: [], upcoming: [], completedToday: [] };
+  const result: DueBuckets = { today: [], overdue: [], upcoming: [], completedToday: [], snoozed: [] };
 
   for (const item of items) {
     if (item.archived) continue;
@@ -43,6 +44,13 @@ export function computeBuckets(
         }
         continue;
       }
+      
+      // اگر تعویق فعال است و تاریخ تعویق نرسیده، به snoozed می‌رود
+      if (r.snoozedUntil && r.snoozedUntil > today) {
+        result.snoozed.push({ item, review: r, untilDate: r.snoozedUntil });
+        continue;
+      }
+
       if (r.dueDate < today) {
         const daysLate = Math.round(
           (new Date(today).getTime() - new Date(r.dueDate).getTime()) / 86400000
@@ -64,6 +72,8 @@ export function computeBuckets(
   result.overdue.sort(compareByDueAndKind);
   result.upcoming.sort(compareByDueAndKind);
   result.completedToday.sort(compareByDueAndKind);
+  result.snoozed.sort((a, b) => a.untilDate.localeCompare(b.untilDate));
+  
   return result;
 }
 
@@ -72,11 +82,8 @@ export function markCompleted(item: ReviewItem, reviewId: string): void {
   if (!r || r.completed) return;
   r.completed = true;
   r.completedAt = new Date().toISOString();
-  item.history.push({
-    at: r.completedAt,
-    type: "review-completed",
-    detail: r.label,
-  });
+  r.snoozedUntil = null; // اگر تعویق بود، پاک شود
+  item.history.push({ at: r.completedAt, type: "review-completed", detail: r.label });
 }
 
 export function reopenReview(item: ReviewItem, reviewId: string): void {
@@ -84,9 +91,31 @@ export function reopenReview(item: ReviewItem, reviewId: string): void {
   if (!r || !r.completed) return;
   r.completed = false;
   r.completedAt = null;
+  item.history.push({ at: new Date().toISOString(), type: "review-reopened", detail: r.label });
+}
+
+/** تعویق: تاریخ انجام را به فردا (یا هر تاریخ دیگری) موکول می‌کند */
+export function snoozeReview(item: ReviewItem, reviewId: string, days: number = 1): void {
+  const r = item.reviews.find((x) => x.id === reviewId);
+  if (!r || r.completed) return;
+  
+  const target = addDays(todayISO(), days);
+  r.snoozedUntil = target;
+  item.history.push({ 
+    at: new Date().toISOString(), 
+    type: "review-completed", 
+    detail: `تعویق تا ${target}` 
+  });
+}
+
+/** لغو تعویق: تاریخ تعویق را پاک می‌کند تا مرور دوباره در داشبورد امروز/عقب‌افتاده ظاهر شود */
+export function unsnoozeReview(item: ReviewItem, reviewId: string): void {
+  const r = item.reviews.find((x) => x.id === reviewId);
+  if (!r) return;
+  r.snoozedUntil = null;
   item.history.push({
     at: new Date().toISOString(),
     type: "review-reopened",
-    detail: r.label,
+    detail: `لغو تعویق ${r.label}`,
   });
 }
