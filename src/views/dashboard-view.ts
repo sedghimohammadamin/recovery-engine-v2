@@ -199,7 +199,7 @@ export class DashboardView extends ItemView {
         const tr = table.createEl("tr");
         
         const titleCell = tr.createEl("td", { text: r.item.title });
-        titleCell.style.cursor = "pointer";
+        titleCell.setCssStyles({ cursor: "pointer" });
         titleCell.onclick = () => new ItemDetailsModal(this.app, this.plugin, r.item, () => this.refresh()).open();
           
         tr.createEl("td", { text: r.review.label });

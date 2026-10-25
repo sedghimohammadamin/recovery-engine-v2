@@ -102,7 +102,7 @@ export class ItemDetailsModal extends Modal {
       startX = e.clientX; startY = e.clientY;
       const rect = modalEl.getBoundingClientRect();
       startW = rect.width; startH = rect.height;
-      document.body.style.cursor = "nwse-resize";
+      document.body.setCssStyles({ cursor: "nwse-resize" });
     });
 
     const onMove = (e: MouseEvent) => {
@@ -118,7 +118,7 @@ export class ItemDetailsModal extends Modal {
     const onUp = () => {
       if (!resizing) return;
       resizing = false;
-      document.body.style.cursor = "";
+      document.body.setCssStyles({ cursor: "" });
     };
 
     document.addEventListener("mousemove", onMove);
