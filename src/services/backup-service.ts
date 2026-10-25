@@ -1,78 +1,46 @@
-import { App, Notice, TFile, Modal, Setting } from "obsidian";
+import { App, Notice } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 
-/**
- * مودال انتخاب فایل پشتیبان از داخل والت
- */
-class BackupFilePickerModal extends Modal {
-  constructor(
-    app: App,
-    private plugin: RecoveryEnginePlugin,
-    private files: TFile[]
-  ) {
-    super(app);
-  }
+export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promise<void> {
+  // ساخت input
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  
+  // استایل‌دهی برای مخفی کردن بصری بدون حذف از DOM
+  input.style.position = "absolute";
+  input.style.left = "-9999px";
+  input.style.opacity = "0";
+  input.style.pointerEvents = "none";
 
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.setAttr("dir", "rtl");
-    contentEl.createEl("h2", { text: "انتخاب فایل پشتیبان" });
+  document.body.appendChild(input);
 
-    if (this.files.length === 0) {
-      contentEl.createEl("p", { text: "هیچ فایل JSON در والت پیدا نشد." });
-      new Setting(contentEl).addButton((b) =>
-        b.setButtonText("بستن").onClick(() => this.close())
-      );
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) {
+      document.body.removeChild(input);
       return;
     }
 
-    const list = contentEl.createEl("div");
-    list.setCssStyles({ maxHeight: "400px", overflowY: "auto", marginTop: "12px" });
-
-    for (const file of this.files) {
-      const row = list.createEl("div");
-      row.setCssStyles({
-        padding: "10px 14px",
-        margin: "6px 0",
-        background: "var(--background-secondary)",
-        borderRadius: "8px",
-        cursor: "pointer",
-        border: "1px solid var(--background-modifier-border)",
-      });
-      row.textContent = file.path;
-      row.onmouseenter = () => {
-        row.style.background = "var(--background-modifier-hover)";
-      };
-      row.onmouseleave = () => {
-        row.style.background = "var(--background-secondary)";
-      };
-      row.onclick = async () => {
-        this.close();
-        await this.restoreFromFile(file);
-      };
-    }
-
-    new Setting(contentEl).addButton((b) =>
-      b.setButtonText("انصراف").onClick(() => this.close())
-    );
-  }
-
-  private async restoreFromFile(file: TFile) {
     try {
-      const text = await this.app.vault.read(file);
+      const text = await file.text();
       const parsed = JSON.parse(text);
 
       if (!parsed || !Array.isArray(parsed.items)) {
         new Notice("فایل پشتیبان معتبر نیست.");
+        document.body.removeChild(input);
         return;
       }
 
-      const current = await this.plugin.exportData();
+      const current = await plugin.exportData();
       const confirmed = confirm(
-        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟`
+        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current as any).items.length} مطلب) شود؟ نسخهٔ فعلی در فایل پشتیبان خودکار ذخیره می‌شود.`
       );
-      if (!confirmed) return;
+
+      if (!confirmed) {
+        document.body.removeChild(input);
+        return;
+      }
 
       // دانلود نسخهٔ فعلی
       const blob = new Blob([JSON.stringify(current, null, 2)], {
@@ -85,7 +53,7 @@ class BackupFilePickerModal extends Modal {
       a.click();
       URL.revokeObjectURL(url);
 
-      await this.plugin.replaceAllData({
+      await plugin.replaceAllData({
         settings: parsed.settings,
         items: parsed.items,
       });
@@ -94,25 +62,11 @@ class BackupFilePickerModal extends Modal {
     } catch (e) {
       console.error(e);
       new Notice("خطا در خواندن فایل پشتیبان.");
+    } finally {
+      document.body.removeChild(input);
     }
-  }
+  };
 
-  onClose() {
-    this.contentEl.empty();
-  }
-}
-
-/**
- * باز کردن مودال انتخاب فایل از داخل والت
- */
-export async function importBackupFromFile(plugin: RecoveryEnginePlugin): Promise<void> {
-  // پیدا کردن فایل‌های JSON در والت
-  const files = plugin.app.vault.getFiles().filter((f) => f.extension === "json");
-
-  if (files.length === 0) {
-    new Notice("هیچ فایل JSON در والت پیدا نشد. ابتدا یک فایل پشتیبان به والت اضافه کنید.");
-    return;
-  }
-
-  new BackupFilePickerModal(plugin.app, plugin, files).open();
+  // اجرای click
+  input.click();
 }
