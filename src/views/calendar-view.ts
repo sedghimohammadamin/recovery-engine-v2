@@ -1,106 +1,195 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import RecoveryEnginePlugin from "../main";
-import { ReviewItem, ReviewSession } from "../models/review-item";
+import { ReviewItem } from "../models/review-item";
 import { ItemDetailsModal } from "./item-details-modal";
 import { getPersianCalendarApi } from "../core/persian-bridge";
 
 export const CALENDAR_VIEW_TYPE = "recovery-engine-calendar";
 
 export class CalendarView extends ItemView {
-  private gYear = new Date().getFullYear();
-  private gMonth = new Date().getMonth();
-  private selectedIso: string | null = null;
+  private currentYear = 1405; // شمسی
+  private currentMonth = 1; // 1 تا 12
 
-  constructor(leaf: WorkspaceLeaf, private plugin: RecoveryEnginePlugin) { super(leaf); }
+  constructor(leaf: WorkspaceLeaf, private plugin: RecoveryEnginePlugin) {
+    super(leaf);
+  }
+
   getViewType() { return CALENDAR_VIEW_TYPE; }
-  getDisplayText() { return "تقویم مرور"; }
+  getDisplayText() { return "تقویم"; }
   getIcon() { return "calendar"; }
 
   async onOpen() { this.render(); }
   refresh() { this.render(); }
 
   private async render() {
-    const c = this.containerEl.children[1] as HTMLElement;
-    c.empty();
-    c.addClass("recovery-engine-dashboard");
-    c.setAttr("dir", "rtl");
+    const container = this.containerEl.children[1] as HTMLElement;
+    container.empty();
+    container.addClass("recovery-engine-dashboard");
+    container.setAttr("dir", "rtl");
 
-    const header = c.createDiv({ cls: "re-cal-header" });
-    const prev = header.createEl("button", { text: "‹" });
-    prev.onclick = () => { this.gMonth--; if (this.gMonth < 0) { this.gMonth = 11; this.gYear--; } this.render(); };
-    const api = getPersianCalendarApi(this.app);
-    let title = `${this.gMonthName(this.gMonth)} ${this.gYear}`;
-    if (api) {
-      const j = api.gregorianToJalali(this.gYear, this.gMonth + 1, 1);
-      title = `${api.jalaliMonthName(j.jm)} ${j.jy}`;
-    }
-    header.createEl("h3", { text: title });
-    const next = header.createEl("button", { text: "›" });
-    next.onclick = () => { this.gMonth++; if (this.gMonth > 11) { this.gMonth = 0; this.gYear++; } this.render(); };
-    const today = header.createEl("button", { text: "امروز" });
-    today.onclick = () => { const d = new Date(); this.gYear = d.getFullYear(); this.gMonth = d.getMonth(); this.render(); };
+    // --- هدر تقویم ---
+    const header = container.createEl("div", { cls: "re-cal-header" });
+    header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" });
 
-    const items = (await this.plugin.getItems()).filter((i) => !i.deleted && !i.archived);
-    const map = new Map<string, { item: ReviewItem; review: ReviewSession }[]>();
+    const prevBtn = header.createEl("button", { text: "‹" });
+    prevBtn.onclick = () => {
+      this.currentMonth--;
+      if (this.currentMonth < 1) { this.currentMonth = 12; this.currentYear--; }
+      this.render();
+    };
+
+    const title = header.createEl("h3", { text: this.getMonthName() + " " + this.currentYear });
+    title.setCssStyles({ margin: "0", fontSize: "20px" });
+
+    const nextBtn = header.createEl("button", { text: "›" });
+    nextBtn.onclick = () => {
+      this.currentMonth++;
+      if (this.currentMonth > 12) { this.currentMonth = 1; this.currentYear++; }
+      this.render();
+    };
+
+    const todayBtn = header.createEl("button", { text: "امروز" });
+    todayBtn.onclick = () => {
+      const api = getPersianCalendarApi(this.app);
+      if (api) {
+        const now = new Date();
+        const j = api.gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        this.currentYear = j.jy;
+        this.currentMonth = j.jm;
+      }
+      this.render();
+    };
+
+    // --- دریافت همه مطالب ---
+    const items = (await this.plugin.getItems()).filter(i => !i.deleted);
+    
+    // گروه‌بندی بر اساس تاریخ یادگیری
+    const itemsByDate = new Map<string, ReviewItem[]>();
     for (const item of items) {
-      for (const r of item.reviews) {
-        const arr = map.get(r.dueDate) ?? [];
-        arr.push({ item, review: r });
-        map.set(r.dueDate, arr);
-      }
+      if (!itemsByDate.has(item.learnedAt)) itemsByDate.set(item.learnedAt, []);
+      itemsByDate.get(item.learnedAt)!.push(item);
     }
 
-    const grid = c.createDiv({ cls: "re-cal-grid" });
-    ["ی", "د", "س", "چ", "پ", "ج", "ش"].forEach((d) =>
-      grid.createDiv({ cls: "re-cal-dow", text: d })
-    );
+    // --- ساخت شبکه تقویم ---
+    const api = getPersianCalendarApi(this.app);
+    const grid = container.createEl("div", { cls: "re-cal-grid" });
+    grid.setCssStyles({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" });
 
-    const firstDay = new Date(this.gYear, this.gMonth, 1);
-    const startOffset = firstDay.getDay();
-    const daysInMonth = new Date(this.gYear, this.gMonth + 1, 0).getDate();
+    // نام روزهای هفته (شنبه تا جمعه)
+    const weekDays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
+    weekDays.forEach(day => {
+      const cell = grid.createEl("div", { text: day });
+      cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "8px", background: "var(--background-secondary)", borderRadius: "6px" });
+    });
 
-    for (let i = 0; i < startOffset; i++) grid.createDiv({ cls: "re-cal-cell empty" });
+    // محاسبه روزهای ماه
+    const daysInMonth = this.getDaysInMonth(this.currentYear, this.currentMonth);
+    // روز اول ماه چه روزی از هفته است؟ (0=شنبه، 6=جمعه)
+    const firstDayOfWeek = this.getFirstDayOfWeek(this.currentYear, this.currentMonth);
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const iso = `${this.gYear}-${String(this.gMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const entries = map.get(iso) ?? [];
-      const cell = grid.createDiv({ cls: "re-cal-cell" });
-      cell.createDiv({ cls: "re-cal-day", text: String(d) });
-      if (entries.length) {
-        cell.createDiv({ cls: "re-cal-count", text: `${entries.length}` });
-        cell.addClass("has-reviews");
-        if (entries.some((e) => !e.review.completed)) cell.addClass("has-pending");
-      }
-      cell.onclick = () => { this.selectedIso = iso; this.renderDetails(c, map); };
+    // سلول‌های خالی قبل از روز اول
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      grid.createEl("div", { cls: "re-cal-cell empty" });
     }
 
-    this.renderDetails(c, map);
+    // روزهای ماه
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cell = grid.createEl("div", { cls: "re-cal-cell" });
+      cell.setCssStyles({
+        minHeight: "80px",
+        padding: "6px",
+        background: "var(--background-primary)",
+        border: "1px solid var(--background-modifier-border)",
+        borderRadius: "8px",
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px"
+      });
+
+      // شماره روز
+      const dayNum = cell.createEl("div", { text: String(day) });
+      dayNum.setCssStyles({ fontWeight: "bold", marginBottom: "4px" });
+
+      // تبدیل تاریخ شمسی این روز به میلادی
+      let isoDate: string | null = null;
+      if (api) {
+        try {
+          const g = api.jalaliToGregorian(this.currentYear, this.currentMonth, day);
+          isoDate = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+        } catch (e) { /* ignore */ }
+      }
+
+      if (isoDate) {
+        const dayItems = itemsByDate.get(isoDate) || [];
+        if (dayItems.length > 0) {
+          const badge = cell.createEl("div", { text: `${dayItems.length} مبحث` });
+          badge.setCssStyles({ fontSize: "11px", background: "var(--interactive-accent)", color: "white", padding: "2px 6px", borderRadius: "10px", alignSelf: "flex-start" });
+          
+          cell.onclick = () => {
+            this.showDayDetails(dayItems, isoDate!);
+          };
+        } else {
+          cell.onclick = () => { /* no-op */ };
+        }
+      }
+
+      grid.appendChild(cell);
+    }
+
+    // --- بخش نمایش جزئیات ---
+    const detailContainer = container.createEl("div", { cls: "re-cal-details" });
+    detailContainer.setCssStyles({ marginTop: "20px" });
   }
 
-  private renderDetails(c: HTMLElement, map: Map<string, { item: ReviewItem; review: ReviewSession }[]>) {
-    const existing = c.querySelector(".re-cal-details");
-    existing?.remove();
-    if (!this.selectedIso) return;
-    const entries = map.get(this.selectedIso) ?? [];
-    const box = c.createDiv({ cls: "re-cal-details" });
-    box.createEl("h3", { text: `مرورهای ${this.selectedIso} (${entries.length})` });
-    if (!entries.length) { box.createEl("p", { cls: "re-empty", text: "موردی نیست." }); return; }
+  private showDayDetails(items: ReviewItem[], isoDate: string) {
+    const container = this.containerEl.children[1] as HTMLElement;
+    const existing = container.querySelector(".re-cal-details");
+    if (existing) existing.empty();
+
+    const box = (existing as HTMLElement) || container.createEl("div", { cls: "re-cal-details" });
+    box.setCssStyles({ marginTop: "20px", padding: "16px", background: "var(--background-secondary)", borderRadius: "12px" });
+
+    box.createEl("h4", { text: `مباحث ثبت‌شده در این روز (${items.length})` });
+    
     const table = box.createEl("table", { cls: "re-table" });
     const head = table.createEl("tr");
-    ["درس", "مبحث", "نوع", "وضعیت"].forEach((h) => head.createEl("th", { text: h }));
-    for (const e of entries) {
-      const subject = this.plugin.settings.subjects.find((s) => s.id === e.item.subjectId);
-      const tr = table.createEl("tr");
-      tr.createEl("td", { text: subject?.name ?? "—" });
-      const t = tr.createEl("td", { text: e.item.title });
-      t.setCssStyles({ cursor: "pointer" });
-      t.onclick = () => new ItemDetailsModal(this.app, this.plugin, e.item, () => this.render()).open();
-      tr.createEl("td", { text: e.review.label });
-      tr.createEl("td", { text: e.review.completed ? "انجام‌شده" : "باقی‌مانده" });
+    ["عنوان مبحث", "درس", "عملیات"].forEach(h => head.createEl("th", { text: h }));
+
+    for (const item of items) {
+      const subject = this.plugin.settings.subjects.find(s => s.id === item.subjectId);
+      const row = table.createEl("tr");
+      row.createEl("td", { text: item.title });
+      row.createEl("td", { text: subject?.name ?? "—" });
+      const ops = row.createEl("td");
+      const btn = ops.createEl("button", { text: "جزئیات" });
+      btn.onclick = () => new ItemDetailsModal(this.app, this.plugin, item, () => this.render()).open();
     }
   }
 
-  private gMonthName(m: number): string {
-    return ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"][m];
+  private getMonthName(): string {
+    const names = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    return names[this.currentMonth - 1];
+  }
+
+  private getDaysInMonth(year: number, month: number): number {
+    if (month <= 6) return 31;
+    if (month <= 11) return 30;
+    // اسفند (ماه 12)
+    return 29; // برای سادگی
+  }
+
+  private getFirstDayOfWeek(year: number, month: number): number {
+    const api = getPersianCalendarApi(this.app);
+    if (!api) return 0;
+    try {
+      const g = api.jalaliToGregorian(year, month, 1);
+      const date = new Date(g.gy, g.gm - 1, g.gd);
+      const jsDay = date.getDay(); // 0=یکشنبه, 6=شنبه
+      // تبدیل به شمسی: شنبه=0, یکشنبه=1, ... جمعه=6
+      return (jsDay + 1) % 7;
+    } catch (e) {
+      return 0;
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { App, Modal, Notice, Setting, TFile } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 import { ReviewItem } from "../models/review-item";
-import { markCompleted, reopenReview } from "../services/review-service";
+import { markCompleted, reopenReview, snoozeReview } from "../services/review-service";
 import { ChecklistModal } from "../modals/checklist-modal";
 import { EditItemModal } from "../modals/edit-item-modal";
 import { formatWithWeekday } from "../core/persian-bridge";

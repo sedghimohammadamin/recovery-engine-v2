@@ -427,3 +427,42 @@
 .re-filter-bar input:focus, .re-filter-bar select:focus {
   border-color: var(--interactive-accent);
 }
+
+/* تقویم */
+.re-cal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.re-cal-header button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.re-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.re-cal-cell {
+  min-height: 80px;
+  padding: 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.re-cal-cell:hover {
+  border-color: var(--interactive-accent);
+}
+.re-cal-cell.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
