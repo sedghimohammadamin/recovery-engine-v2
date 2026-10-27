@@ -3,7 +3,6 @@ import { StorageService, DEFAULT_SETTINGS } from "./services/storage-service";
 import { RecoverySettings, ReviewItem } from "./models/review-item";
 import { DashboardView, DASHBOARD_VIEW_TYPE } from "./views/dashboard-view";
 import { ItemsView, ITEMS_VIEW_TYPE } from "./views/items-view";
-import { CalendarView, CALENDAR_VIEW_TYPE } from "./views/calendar-view";
 import { ReportsView, REPORTS_VIEW_TYPE } from "./views/reports-view";
 import { AddItemModal } from "./modals/add-item-modal";
 import { RecoverySettingsTab } from "./settings/settings-tab";
@@ -24,14 +23,12 @@ export default class RecoveryEnginePlugin extends Plugin {
 
     this.registerView(DASHBOARD_VIEW_TYPE, (l) => new DashboardView(l, this));
     this.registerView(ITEMS_VIEW_TYPE, (l) => new ItemsView(l, this));
-    this.registerView(CALENDAR_VIEW_TYPE, (l) => new CalendarView(l, this));
     this.registerView(REPORTS_VIEW_TYPE, (l) => new ReportsView(l, this));
 
     this.addRibbonIcon("calendar-check", "Recovery Engine", () => this.openView(DASHBOARD_VIEW_TYPE));
 
     this.addCommand({ id: "open-dashboard", name: "بازکردن داشبورد مرور", callback: () => this.openView(DASHBOARD_VIEW_TYPE) });
     this.addCommand({ id: "open-items", name: "همهٔ مطالب", callback: () => this.openView(ITEMS_VIEW_TYPE) });
-    this.addCommand({ id: "open-calendar", name: "تقویم مرور", callback: () => this.openView(CALENDAR_VIEW_TYPE) });
     this.addCommand({ id: "open-reports", name: "گزارش‌ها", callback: () => this.openView(REPORTS_VIEW_TYPE) });
     this.addCommand({ id: "add-item", name: "ثبت مطلب جدید", callback: () => new AddItemModal(this.app, this).open() });
 
@@ -149,7 +146,7 @@ export default class RecoveryEnginePlugin extends Plugin {
   }
 
   refreshDashboards() {
-    [DASHBOARD_VIEW_TYPE, ITEMS_VIEW_TYPE, CALENDAR_VIEW_TYPE, REPORTS_VIEW_TYPE].forEach((t) => {
+    [DASHBOARD_VIEW_TYPE, ITEMS_VIEW_TYPE, REPORTS_VIEW_TYPE].forEach((t) => {
       this.app.workspace.getLeavesOfType(t).forEach((l) => {
         const v: unknown = l.view;
         if (typeof v.refresh === "function") v.refresh();

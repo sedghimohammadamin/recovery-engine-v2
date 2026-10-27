@@ -4,11 +4,11 @@
 
 .recovery-engine-dashboard {
   direction: rtl;
-  padding: 24px;
+  padding: 12px 16px;
   font-family: var(--font-interface), "Vazirmatn", sans-serif;
   color: var(--text-normal);
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   background: var(--background-primary);
 }
 
@@ -88,7 +88,7 @@
 }
 
 .re-empty {
-  padding: 24px;
+  padding: 12px 16px;
   text-align: center;
   color: var(--text-faint);
   font-size: 13px;
@@ -148,7 +148,7 @@
 }
 
 .re-checklist-content {
-  padding: 24px;
+  padding: 12px 16px;
   direction: rtl;
   /* اسکرول در صورت زیاد بودن آیتم‌ها */
   max-height: 60vh;
@@ -236,7 +236,7 @@
 }
 
 .re-detail-content {
-  padding: 24px;
+  padding: 12px 16px;
   direction: rtl;
   /* مهم: اسکرول */
   flex: 1;
@@ -465,4 +465,16 @@
   background: transparent;
   border: none;
   cursor: default;
+}
+
+/* ---- پر کردن عرض با padding مناسب ---- */
+.workspace-leaf-content[data-type="recovery-engine-dashboard"] .view-content {
+  padding: 0 !important;
+  max-width: none !important;
+}
+.workspace-leaf-content[data-type="recovery-engine-dashboard"] .recovery-engine-dashboard {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  padding: 24px 32px !important;
 }
