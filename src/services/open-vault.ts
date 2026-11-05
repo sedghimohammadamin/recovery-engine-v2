@@ -2,18 +2,17 @@ import { Notice, Platform } from "obsidian";
 
 /**
  * باز کردن والت با URI از طریق macOS (دستور open).
- * روی ویندوز/لینوکس از window.open استفاده می‌کند.
+ * روی اندروید و موبایل از window.open استفاده می‌کند.
  */
 export function openVaultUri(vaultId: string): void {
   const uri = `obsidian://open?vault=${encodeURIComponent(vaultId)}`;
 
-  if (Platform.isMacOS) {
+  if (Platform.isDesktopApp) {
     try {
-      const req = (window as unknown).require;
+      const req = (window as any).require;
       if (typeof req === "function") {
         const { exec } = req("child_process");
-        // استفاده از open برای اینکه macOS URI را به Obsidian برساند
-        exec(`open "${uri}"`, (err: unknown) => {
+        exec(`open "${uri}"`, (err: any) => {
           if (err) {
             console.error("[RecoveryEngine] open vault error:", err);
             new Notice("خطا در باز کردن والت.");
@@ -26,6 +25,6 @@ export function openVaultUri(vaultId: string): void {
     }
   }
 
-  // fallback: window.open
+  // روی موبایل یا اگر exec کار نکرد، از window.open استفاده میکنیم
   window.open(uri, "_blank");
 }

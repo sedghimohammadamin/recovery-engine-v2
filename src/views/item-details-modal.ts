@@ -20,6 +20,7 @@ export class ItemDetailsModal extends Modal {
   }
 
   async openSource(src: string) {
+    if (this.item.sourceBlockId) src += `#^${this.item.sourceBlockId}`;
     const clean = src.trim();
     if (!clean) return;
     const file = this.app.vault.getAbstractFileByPath(clean);

@@ -1,134 +1,171 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
-import RecoveryEnginePlugin from "../main";
-import { ReviewItem } from "../models/review-item";
-import { ItemDetailsModal } from "./item-details-modal";
+import { App } from "obsidian";
+import { toGregorian } from "../core/persian-bridge";
+import { ReviewSession } from "../models/review-item";
 
-export const CALENDAR_VIEW_TYPE = "recovery-engine-calendar";
+export interface CalendarOptions {
+  reviews?: ReviewSession[];
+  learnedAt?: string;
+  cellHeight?: string;
+  rangeStart?: string;
+  rangeEnd?: string;
+  onMonthChange?: (year: number, month: number) => void;
+}
 
-export class CalendarView extends ItemView {
-  constructor(leaf: WorkspaceLeaf, private plugin: RecoveryEnginePlugin) {
-    super(leaf);
+export function renderJalaliCalendar(
+  app: App,
+  container: HTMLElement,
+  currentYear: number,
+  currentMonth: number,
+  options: CalendarOptions = {}
+): void {
+  container.empty();
+  container.setAttr("dir", "rtl");
+  container.addClass("re-cal-container");
+
+  const KIND_COLORS: Record<string, string> = {
+    initial: "#3b82f6",
+    weekend: "#10b981",
+    monthly: "#f59e0b",
+    longterm: "#ef4444",
+  };
+  const KIND_LABELS: Record<string, string> = {
+    initial: "مرور اولیه",
+    weekend: "مرور هفتگی",
+    monthly: "مرور ماهانه",
+    longterm: "مرور بلندمدت",
+  };
+
+  const reviewsByDate = new Map<string, ReviewSession[]>();
+  if (options.reviews) {
+    for (const r of options.reviews) {
+      if (!reviewsByDate.has(r.dueDate)) reviewsByDate.set(r.dueDate, []);
+      reviewsByDate.get(r.dueDate)!.push(r);
+    }
   }
 
-  getViewType() { return CALENDAR_VIEW_TYPE; }
-  getDisplayText() { return "تقویم"; }
-  getIcon() { return "calendar"; }
+  // --- هدر ---
+  const header = container.createEl("div", { cls: "re-cal-header" });
+  header.setCssStyles({ 
+    display: "flex", justifyContent: "space-between", alignItems: "center", 
+    marginBottom: "8px", padding: "4px 8px", background: "var(--background-primary)", 
+    borderRadius: "8px", border: "1px solid var(--background-modifier-border)" 
+  });
 
-  async onOpen() { this.render(); }
-  refresh() { this.render(); }
+  if (options.onMonthChange) {
+    const prevBtn = header.createEl("button", { text: "‹" });
+    prevBtn.setCssStyles({ padding: "2px 10px", cursor: "pointer", background: "transparent", border: "none", fontSize: "18px", color: "var(--text-muted)" });
+    prevBtn.onclick = () => {
+      let m = currentMonth - 1, y = currentYear;
+      if (m < 1) { m = 12; y--; }
+      options.onMonthChange!(y, m);
+    };
+  }
 
-  async render() {
-    const container = this.containerEl.children[1] as HTMLElement;
-    container.empty();
-    container.addClass("recovery-engine-dashboard");
-    container.setAttr("dir", "rtl");
+  const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+  header.createEl("h4", { text: `${monthNames[currentMonth - 1]} ${currentYear}`, style: "margin: 0; font-size: 14px;" });
 
-    // --- بخش تقویم داخل داشبورد ---
-    const calSection = container.createEl("section", { cls: "re-cal-section" });
-    calSection.setCssStyles({ marginTop: "24px", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "16px" });
+  if (options.onMonthChange) {
+    const nextBtn = header.createEl("button", { text: "›" });
+    nextBtn.setCssStyles({ padding: "2px 10px", cursor: "pointer", background: "transparent", border: "none", fontSize: "18px", color: "var(--text-muted)" });
+    nextBtn.onclick = () => {
+      let m = currentMonth + 1, y = currentYear;
+      if (m > 12) { m = 1; y++; }
+      options.onMonthChange!(y, m);
+    };
+  }
 
-    calSection.createEl("h3", { text: "📅 تقویم مباحث" });
-    calSection.setCssStyles({ marginBottom: "16px" });
+  // --- شبکه ---
+  const grid = container.createEl("div", { cls: "re-cal-grid" });
+  grid.setCssStyles({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" });
 
-    const items = (await this.plugin.getItems()).filter(i => !i.deleted);
+  const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
+  weekDays.forEach(d => {
+    const cell = grid.createEl("div", { text: d });
+    cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "6px", color: "var(--text-muted)", fontSize: "11px" });
+  });
+
+  const daysInMonth = currentMonth <= 6 ? 31 : (currentMonth <= 11 ? 30 : 29);
+  const firstG = toGregorian(app, currentYear, currentMonth, 1);
+  const firstDay = new Date(firstG.gy, firstG.gm - 1, firstG.gd);
+  const startOffset = (firstDay.getDay() + 1) % 7; // شنبه=0
+
+  for (let i = 0; i < startOffset; i++) grid.createEl("div");
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const g = toGregorian(app, currentYear, currentMonth, d);
+    const iso = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+    const dayReviews = reviewsByDate.get(iso) || [];
+
+    const inRange = (!options.rangeStart || iso >= options.rangeStart) && (!options.rangeEnd || iso <= options.rangeEnd);
+    const cell = grid.createEl("div", { cls: "re-cal-cell" });
     
-    // گروه‌بندی بر اساس تاریخ یادگیری (ISO: YYYY-MM-DD)
-    const itemsByDate = new Map<string, ReviewItem[]>();
-    for (const item of items) {
-      if (!itemsByDate.has(item.learnedAt)) itemsByDate.set(item.learnedAt, []);
-      itemsByDate.get(item.learnedAt)!.push(item);
+    let bgColor = "var(--background-secondary)";
+    let borderColor = "var(--background-modifier-border)";
+    let textColor = "var(--text-normal)";
+    let opacity = "1";
+    let cursor = "default";
+    
+    if (dayReviews.length > 0) {
+      const firstKind = dayReviews[0].kind;
+      bgColor = KIND_COLORS[firstKind] || bgColor;
+      borderColor = KIND_COLORS[firstKind] || borderColor;
+      textColor = "white";
+      cursor = "help";
+    } else if (!inRange) {
+      bgColor = "transparent";
+      borderColor = "transparent";
+      textColor = "var(--text-faint)";
+      opacity = "0.2";
     }
 
-    // --- شبکه تقویم (میلادی ساده) ---
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-11
-
-    const monthNames = ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"];
-    const header = calSection.createEl("div", { cls: "re-cal-header" });
-    header.createEl("h4", { text: `${monthNames[currentMonth]} ${currentYear}` });
-
-    const grid = calSection.createEl("div", { cls: "re-cal-grid" });
-
-    // نام روزهای هفته (شنبه تا جمعه، RTL)
-    const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
-    weekDays.forEach(d => {
-      const cell = grid.createEl("div", { text: d, cls: "re-cal-dow" });
-      cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "8px", color: "var(--text-muted)" });
+    cell.setCssStyles({
+      minHeight: options.cellHeight || "50px",
+      padding: "4px",
+      borderRadius: "6px",
+      background: bgColor,
+      border: `1px solid ${borderColor}`,
+      color: textColor,
+      opacity,
+      cursor,
+      display: "flex",
+      flexDirection: "column",
+      gap: "2px",
+      fontSize: "12px",
+      position: "relative",
     });
 
-    // روز اول ماه چه روزی از هفته است؟
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const startOffset = (firstDay.getDay() + 1) % 7; // شنبه=0
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const dayNum = cell.createEl("div", { text: String(d) });
+    dayNum.setCssStyles({ fontWeight: "bold" });
 
-    // سلول‌های خالی
-    for (let i = 0; i < startOffset; i++) {
-      const empty = grid.createEl("div", { cls: "re-cal-cell empty" });
-      empty.setCssStyles({ minHeight: "70px", background: "transparent", border: "none" });
+    if (dayReviews.length > 0) {
+      const badge = cell.createEl("div", { text: String(dayReviews.length) });
+      badge.setCssStyles({ fontSize: "10px", opacity: "0.9", alignSelf: "flex-start" });
+      
+      const tooltipLines = dayReviews.map(r => `${KIND_LABELS[r.kind] || "مرور"}: ${r.label}`);
+      const tooltip = tooltipLines.join("\n");
+      
+      // ✅ تولتیپ با data-tooltip (CSS خالص، تضمینی)
+      cell.setAttribute("data-tooltip", tooltip);
+      cell.addClass("re-has-tooltip");
     }
 
-    // روزها
-    for (let day = 1; day <= daysInMonth; day++) {
-      const iso = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const dayItems = itemsByDate.get(iso) || [];
-      
-      const cell = grid.createEl("div", { cls: "re-cal-cell" });
-      cell.setCssStyles({
-        minHeight: "70px",
-        padding: "6px",
-        background: dayItems.length > 0 ? "var(--background-modifier-hover)" : "var(--background-secondary)",
-        border: "1px solid var(--background-modifier-border)",
-        borderRadius: "8px",
-        cursor: dayItems.length > 0 ? "pointer" : "default",
-        display: "flex",
-        flexDirection: "column",
-        gap: "4px",
-        position: "relative"
-      });
-
-      const dayNum = cell.createEl("div", { text: String(day) });
-      dayNum.setCssStyles({ fontWeight: "bold", fontSize: "13px" });
-
-      if (dayItems.length > 0) {
-        const badge = cell.createEl("div", { text: `${dayItems.length}`, cls: "re-cal-badge" });
-        badge.setCssStyles({
-          fontSize: "10px",
-          background: "var(--interactive-accent)",
-          color: "white",
-          padding: "1px 6px",
-          borderRadius: "10px",
-          alignSelf: "flex-start"
-        });
-
-        cell.onclick = () => {
-          this.showDayDetails(calSection, dayItems, iso);
-        };
+    if (options.learnedAt === iso) {
+      cell.setCssStyles({ border: "2px solid #ef4444" });
+      if (dayReviews.length === 0) {
+        cell.setAttribute("data-tooltip", "تاریخ یادگیری");
+        cell.addClass("re-has-tooltip");
       }
     }
   }
 
-  private showDayDetails(container: HTMLElement, items: ReviewItem[], isoDate: string) {
-    const existing = container.querySelector(".re-cal-details");
-    if (existing) existing.remove();
-
-    const box = container.createEl("div", { cls: "re-cal-details" });
-    box.setCssStyles({ marginTop: "16px", padding: "16px", background: "var(--background-secondary)", borderRadius: "12px", border: "1px solid var(--background-modifier-border)" });
-
-    box.createEl("h4", { text: `مباحث روز ${isoDate} (${items.length})` });
-
-    const table = box.createEl("table", { cls: "re-table" });
-    const head = table.createEl("tr");
-    ["عنوان مبحث", "درس", "عملیات"].forEach(h => head.createEl("th", { text: h }));
-
-    for (const item of items) {
-      const subject = this.plugin.settings.subjects.find(s => s.id === item.subjectId);
-      const row = table.createEl("tr");
-      row.createEl("td", { text: item.title });
-      row.createEl("td", { text: subject?.name ?? "—" });
-      const ops = row.createEl("td");
-      const btn = ops.createEl("button", { text: "جزئیات" });
-      btn.onclick = () => new ItemDetailsModal(this.app, this.plugin, item, () => this.render()).open();
-    }
+  // --- افسانه ---
+  const legend = container.createEl("div", { cls: "re-cal-legend" });
+  legend.setCssStyles({ display: "flex", gap: "12px", marginTop: "8px", flexWrap: "wrap", fontSize: "11px" });
+  for (const [kind, label] of Object.entries(KIND_LABELS)) {
+    const item = legend.createEl("div");
+    item.setCssStyles({ display: "flex", alignItems: "center", gap: "4px" });
+    const dot = item.createEl("div");
+    dot.setCssStyles({ width: "12px", height: "12px", borderRadius: "3px", background: KIND_COLORS[kind] });
+    item.createEl("span", { text: label });
   }
 }

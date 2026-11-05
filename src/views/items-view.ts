@@ -18,7 +18,7 @@ export class ItemsView extends ItemView {
   refresh() { this.render(); }
 
   private async render() {
-    const c = this.containerEl.children[1] as HTMLElement;
+    const c = this.contentEl;
     c.empty(); c.addClass("recovery-engine-dashboard"); c.setAttr("dir", "rtl");
     c.createEl("h2", { text: "همهٔ مطالب" });
 

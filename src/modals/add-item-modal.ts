@@ -3,26 +3,39 @@ import RecoveryEnginePlugin from "../main";
 import { ReviewItem } from "../models/review-item";
 import { buildSchedule } from "../core/scheduler";
 import { todayISO } from "../core/date-utils";
+import { toJalali, jalaliMonthName } from "../core/persian-bridge";
 import { JalaliDatePickerModal } from "./jalali-datepicker";
+import { renderJalaliCalendar } from "../views/calendar-view";
 
 export class AddItemModal extends Modal {
   private title = "";
   private subjectId: string;
   private learnedAt = todayISO();
   private source = "";
+  private sourceBlockId = "";
   private rangeFrom = "";
   private rangeTo = "";
   private notes = "";
+  private dateLabelEl: HTMLElement | null = null;
+  private previewYear = 0;
+  private previewMonth = 0;
 
   constructor(app: App, private plugin: RecoveryEnginePlugin) {
     super(app);
     this.subjectId = plugin.settings.subjects.find((s) => !s.archived)?.id ?? plugin.settings.subjects[0]?.id ?? "";
+    const now = new Date();
+    const j = toJalali(app, now.getFullYear(), now.getMonth() + 1, now.getDate());
+    this.previewYear = j.jy;
+    this.previewMonth = j.jm;
   }
 
   onOpen() {
-    const { contentEl } = this;
+    const { contentEl, modalEl } = this;
     contentEl.empty();
     contentEl.setAttr("dir", "rtl");
+    modalEl.addClass("re-add-modal");
+    contentEl.addClass("re-add-content");
+
     contentEl.createEl("h2", { text: "ثبت مطلب جدید" });
 
     new Setting(contentEl).setName("عنوان مبحث").addText((t) =>
@@ -35,41 +48,46 @@ export class AddItemModal extends Modal {
       d.setValue(this.subjectId).onChange((v) => (this.subjectId = v));
     });
 
-    new Setting(contentEl).setName("تاریخ یادگیری")
-      .addButton((b) =>
-        b.setButtonText("انتخاب تاریخ شمسی").onClick(() =>
-          new JalaliDatePickerModal(this.app, this.learnedAt, (iso) => {
-            this.learnedAt = iso;
-            b.setButtonText(`تاریخ: ${iso}`);
-          }).open()
-        )
-      )
-      .addButton((b) =>
-        b.setButtonText("امروز").onClick(() => {
-          this.learnedAt = todayISO();
-          b.setButtonText("امروز انتخاب شد");
-        })
-      );
+    // تاریخ یادگیری
+    const dateSetting = new Setting(contentEl).setName("تاریخ یادگیری");
+    const dateRow = dateSetting.controlEl.createEl("div");
+    dateRow.setCssStyles({ display: "flex", gap: "8px" });
 
-    new Setting(contentEl)
-      .setName("منبع (لینک فایل جزوه)")
-      .setDesc("مسیر فایل یا لینک [[فایل]]")
-      .addText((t) => {
-        t.setPlaceholder("مثلاً: [[جزوات/فقه۱/جلسه۳]]");
-        t.setValue(this.source);
-        t.onChange((v) => (this.source = v));
-      });
+    const todayBtn = dateRow.createEl("button", { text: "امروز" });
+    todayBtn.onclick = () => {
+      this.learnedAt = todayISO();
+      this.updateDateLabel();
+      this.updatePreview(calWrapper);
+    };
 
-    new Setting(contentEl).setName("محدوده از").addText((t) =>
-      t.setPlaceholder("مثلاً: صفحه ۱۲").onChange((v) => (this.rangeFrom = v))
-    );
-    new Setting(contentEl).setName("محدوده تا").addText((t) =>
-      t.setPlaceholder("مثلاً: صفحه ۱۸").onChange((v) => (this.rangeTo = v))
-    );
-    new Setting(contentEl).setName("یادداشت").addTextArea((t) =>
-      t.onChange((v) => (this.notes = v))
-    );
+    const pickBtn = dateRow.createEl("button", { text: "انتخاب از تقویم" });
+    pickBtn.onclick = () => {
+      new JalaliDatePickerModal(this.app, this.learnedAt, (iso) => {
+        this.learnedAt = iso;
+        this.updateDateLabel();
+        this.updatePreview(calWrapper);
+      }).open();
+    };
 
+    this.dateLabelEl = contentEl.createEl("div", { cls: "re-date-label" });
+    this.dateLabelEl.setCssStyles({ marginBottom: "16px", fontSize: "14px", color: "var(--text-accent)" });
+    this.updateDateLabel();
+
+    // منبع
+    new Setting(contentEl).setName("منبع").addText((t) => t.setValue(this.source).onChange((v) => (this.source = v)));
+    new Setting(contentEl).setName("بلاک آیدی").setDesc("اختیاری: برای لینک به یک بلاک خاص (مثلاً firstblock)").addText((t) => t.setValue(this.sourceBlockId).onChange((v) => (this.sourceBlockId = v)));
+    
+    new Setting(contentEl).setName("محدوده از").addText((t) => t.onChange((v) => (this.rangeFrom = v)));
+    new Setting(contentEl).setName("محدوده تا").addText((t) => t.onChange((v) => (this.rangeTo = v)));
+    new Setting(contentEl).setName("یادداشت").addTextArea((t) => t.onChange((v) => (this.notes = v)));
+
+    // پیش‌نمایش
+    contentEl.createEl("h3", { text: "پیش‌نمایش برنامه مرور" });
+    const calWrapper = contentEl.createEl("div", { cls: "re-preview-cal-wrapper" });
+    calWrapper.setCssStyles({ padding: "12px", background: "var(--background-secondary)", borderRadius: "10px", marginBottom: "16px" });
+    this.updatePreview(calWrapper);
+
+    // دکمه ثبت
     new Setting(contentEl).addButton((b) =>
       b.setButtonText("ثبت").setCta().onClick(async () => {
         if (!this.title.trim()) { new Notice("عنوان الزامی است."); return; }
@@ -81,6 +99,7 @@ export class AddItemModal extends Modal {
           title: this.title.trim(),
           learnedAt: this.learnedAt,
           source: this.source.trim(),
+          sourceBlockId: this.sourceBlockId.trim() || undefined,
           rangeFrom: this.rangeFrom,
           rangeTo: this.rangeTo,
           notes: this.notes,
@@ -90,10 +109,53 @@ export class AddItemModal extends Modal {
           archived: false,
         };
         await this.plugin.addItem(item);
-        new Notice(`«${item.title}» ثبت شد (${reviews.length} مرور).`);
+        new Notice(`«${item.title}» ثبت شد.`);
         this.close();
       })
     );
+  }
+
+  private updateDateLabel() {
+    if (!this.dateLabelEl) return;
+    const [gy, gm, gd] = this.learnedAt.split("-").map(Number);
+    const j = toJalali(this.app, gy, gm, gd);
+    this.previewYear = j.jy;
+    this.previewMonth = j.jm;
+    const weekDays = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
+    const d = new Date(gy, gm - 1, gd);
+    this.dateLabelEl.textContent = `تاریخ انتخاب‌شده: ${weekDays[d.getDay()]} ${j.jd} ${jalaliMonthName(this.app, j.jm)} ${j.jy}`;
+  }
+
+  private updatePreview(container: HTMLElement, year?: number, month?: number) {
+    if (year !== undefined) this.previewYear = year;
+    if (month !== undefined) this.previewMonth = month;
+
+    container.empty();
+    const reviews = buildSchedule(this.learnedAt, this.plugin.settings.schedule);
+    
+    const allDates = reviews.map(r => r.dueDate).sort();
+    const rangeStart = this.learnedAt;
+    const rangeEnd = allDates.length > 0 ? allDates[allDates.length - 1] : this.learnedAt;
+
+    renderJalaliCalendar(this.app, container, this.previewYear, this.previewMonth, {
+      reviews: reviews,
+      learnedAt: this.learnedAt,
+      cellHeight: "45px",
+      rangeStart: rangeStart,
+      rangeEnd: rangeEnd,
+      onMonthChange: (y, m) => {
+        // ذخیره موقعیت اسکرول
+        const scrollTop = this.contentEl.scrollTop;
+        
+        // رندر مجدد تقویم
+        this.updatePreview(container, y, m);
+        
+        // بازگرداندن موقعیت اسکرول در فریم بعدی
+        window.requestAnimationFrame(() => {
+          this.contentEl.scrollTop = scrollTop;
+        });
+      }
+    });
   }
 
   onClose() { this.contentEl.empty(); }

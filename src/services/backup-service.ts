@@ -2,16 +2,12 @@ import { Notice } from "obsidian";
 import RecoveryEnginePlugin from "../main";
 
 export async function importBackupFromFile(
-  plugin: RecoveryEnginePlugin
+  plugin: RecoveryEnginePlugin,
+  file?: File
 ): Promise<void> {
-  const input = createEl("input");
-  input.type = "file";
-  input.accept = ".json,application/json";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if (!file) return;
+  const handleFile = async (f: File) => {
     try {
-      const text = await file.text();
+      const text = await f.text();
       const parsed = JSON.parse(text);
       if (!parsed || !Array.isArray(parsed.items)) {
         new Notice("فایل پشتیبان معتبر نیست.");
@@ -20,10 +16,11 @@ export async function importBackupFromFile(
       // نگه‌داری نسخهٔ فعلی
       const current = await plugin.exportData();
       const confirmed = confirm(
-        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${(current).items.length} مطلب) شود؟ نسخهٔ فعلی در فایل پشتیبان خودکار ذخیره می‌شود.`
+        `بازیابی ${parsed.items.length} مطلب جای‌گزین اطلاعات فعلی (${current.items.length} مطلب) شود؟ نسخهٔ فعلی در فایل پشتیبان خودکار ذخیره می‌شود.`
       );
       if (!confirmed) return;
-      // دانلود نسخهٔ فعلی به‌عنوان پشتیبان
+
+      // دانلود نسخهٔ فعلی به‌عنوان پشتیبان خودکار
       const blob = new Blob([JSON.stringify(current, null, 2)], {
         type: "application/json",
       });
@@ -38,11 +35,31 @@ export async function importBackupFromFile(
         settings: parsed.settings,
         items: parsed.items,
       });
-      new Notice("پشتیبان بازیابی شد.");
+      new Notice("پشتیبان با موفقیت بازیابی شد.");
+      plugin.refreshDashboards();
     } catch (e) {
       console.error(e);
       new Notice("خطا در خواندن فایل پشتیبان.");
     }
+  };
+
+  if (file) {
+    await handleFile(file);
+    return;
+  }
+
+  // ایجاد المان فایل با الصاق به صفحه تا در Obsidian / Electron بدون مشکل باز شود
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.style.display = "none";
+  document.body.appendChild(input);
+  input.onchange = async () => {
+    const f = input.files?.[0];
+    if (f) {
+      await handleFile(f);
+    }
+    input.remove();
   };
   input.click();
 }

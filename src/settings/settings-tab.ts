@@ -3,7 +3,6 @@ import RecoveryEnginePlugin from "../main";
 import { Subject } from "../models/review-item";
 import { importBackupFromFile } from "../services/backup-service";
 import { hasPersianCalendar } from "../core/persian-bridge";
-import { sendMacNotificationWithActions } from "../services/notify-mac";
 
 export class RecoverySettingsTab extends PluginSettingTab {
   constructor(app: App, private plugin: RecoveryEnginePlugin) {
@@ -14,15 +13,12 @@ export class RecoverySettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.setAttr("dir", "rtl");
-    ;
+    containerEl.createEl("h1", { text: "تنظیمات موتور بازیابی" });
 
     const s = this.plugin.settings;
 
-    // ---------- عمومی ----------
-    new Setting(containerEl).setName("عمومی").setHeading();
-    new Setting(containerEl).setName("نام نمایشی").addText((t) =>
-      t.setValue(s.displayName).onChange(async (v) => { s.displayName = v; await this.plugin.saveSettings(); })
-    );
+    // ========== عمومی ==========
+    containerEl.createEl("h2", { text: "عمومی" });
     new Setting(containerEl).setName("عنوان داشبورد").addText((t) =>
       t.setValue(s.dashboardTitle).onChange(async (v) => { s.dashboardTitle = v; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); })
     );
@@ -32,286 +28,372 @@ export class RecoverySettingsTab extends PluginSettingTab {
     new Setting(containerEl).setName("نمایش مرورهای انجام‌شده").addToggle((t) =>
       t.setValue(s.showCompleted).onChange(async (v) => { s.showCompleted = v; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); })
     );
-    new Setting(containerEl).setName("بازهٔ آینده (روز)").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.upcomingWindowDays)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 0) { s.upcomingWindowDays = n; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); }
-      });
-    });
-    new Setting(containerEl).setName("تعداد نمایش در هر بخش").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.dashboardListLimit)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n > 0) { s.dashboardListLimit = n; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); }
-      });
+
+    // ========== نمایش تاریخ ==========
+    containerEl.createEl("h2", { text: "نمایش تاریخ" });
+    new Setting(containerEl).setName("فرمت تاریخ").addDropdown((d) => {
+      d.addOption("gregorian", "میلادی"); d.addOption("jalali", "شمسی");
+      d.setValue(s.dateFormat).onChange(async (v) => { s.dateFormat = v as any; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); });
     });
 
-    // ---------- نمایش تاریخ ----------
-    new Setting(containerEl).setName("نمایش تاریخ").setHeading();
-    const pcAvail = hasPersianCalendar(this.app);
-    new Setting(containerEl)
-      .setName("فرمت نمایش تاریخ")
-      .setDesc(
-        pcAvail
-          ? "افزونهٔ Persian Calendar شناسایی شد. تاریخ‌ها قابل نمایش شمسی هستند."
-          : "⚠️ افزونهٔ Persian Calendar نصب نیست. تا نصب نشود، تاریخ‌ها میلادی نمایش داده می‌شوند."
-      )
-      .addDropdown((d) => {
-        d.addOption("gregorian", "میلادی");
-        d.addOption("jalali", "شمسی (نیازمند Persian Calendar)");
-        d.setValue(s.dateFormat).onChange(async (v) => {
-          s.dateFormat = v as unknown;
-          await this.plugin.saveSettings();
-          this.plugin.refreshDashboards();
-        });
-      });
+    // ========== درس‌ها ==========
+    containerEl.createEl("h2", { text: "درس‌ها" });
+    const subjectsWrapper = containerEl.createEl("div", { cls: "re-subjects-section" });
+    
+    const renderSubjects = () => {
+      subjectsWrapper.empty();
+      s.subjects.forEach((subj, idx) => this.renderSubject(subjectsWrapper, subj, idx));
+    };
 
-    // ---------- اعلان‌ها ----------
-    new Setting(containerEl).setName("شناسهٔ والت").setHeading();
-    new Setting(containerEl)
-      .setName("Vault ID")
-      .setDesc("برای باز کردن والت از روی نوتیفیکیشن. از Vault switcher → راست‌کلیک روی والت → Copy vault ID")
-      .addText((t) =>
-        t.setValue(s.vaultId ?? "").onChange(async (v) => {
-          s.vaultId = v.trim();
-          await this.plugin.saveSettings();
-        })
-      );
+    renderSubjects();
 
-    new Setting(containerEl).setName("اعلان‌ها").setHeading();
+    new Setting(containerEl).addButton((b) =>
+      b.setButtonText("افزودن درس جدید").setCta().onClick(async () => {
+        s.subjects.push({ id: `subj-${Date.now()}`, name: "درس جدید", archived: false, checklist: [] });
+        await this.plugin.saveSettings();
+        renderSubjects();
+      })
+    );
 
-    new Setting(containerEl).setName("اعلان هنگام باز شدن Obsidian").addToggle((t) =>
+    // ========== چرخه‌های مرور ==========
+    containerEl.createEl("h2", { text: "چرخه‌های مرور" });
+    containerEl.createEl("p", { text: "هر چرخه در یک باکس جداگانه است. با دکمه‌های داخل هر باکس، تعداد مرورها را تنظیم کنید.", cls: "setting-item-description" });
+
+    const cyclesWrapper = containerEl.createEl("div", { cls: "re-cycles-wrapper" });
+    this.renderCycleBox(cyclesWrapper, "initial", "مرورهای اولیه");
+    this.renderCycleBox(cyclesWrapper, "weekend", "مرورهای هفتگی");
+    this.renderCycleBox(cyclesWrapper, "monthly", "مرورهای ماهانه");
+    this.renderCycleBox(cyclesWrapper, "longterm", "مرورهای بلندمدت");
+
+    // ========== اعلان‌ها ==========
+    containerEl.createEl("h2", { text: "اعلان‌ها" });
+    new Setting(containerEl).setName("اعلان هنگام باز شدن").addToggle((t) =>
       t.setValue(s.notifyOnStartup).onChange(async (v) => { s.notifyOnStartup = v; await this.plugin.saveSettings(); })
     );
     new Setting(containerEl).setName("اعلان مرورهای عقب‌افتاده").addToggle((t) =>
       t.setValue(s.notifyOverdue).onChange(async (v) => { s.notifyOverdue = v; await this.plugin.saveSettings(); })
     );
-    new Setting(containerEl).setName("روش اعلان").addDropdown((d) => {
-      d.addOption("obsidian", "فقط داخل Obsidian");
-      d.addOption("macos", "فقط نوتیفیکیشن macOS");
-      d.addOption("both", "هر دو");
-      d.setValue((s as unknown).notifyMode ?? "both").onChange(async (v) => {
-        (s as unknown).notifyMode = v;
-        await this.plugin.saveSettings();
-      });
-    });
 
-    // دکمهٔ تست
-    new Setting(containerEl)
-      .setName("تست اعلان")
-      .setDesc("یک اعلان نمونه با دکمه‌های باز کردن والت و تعویق نمایش می‌دهد.")
-      .addButton((b) =>
-        b.setButtonText("ارسال تست").onClick(async () => {
-          const { notifyOverdueWithActions } = await import("../services/notify-service");
-          notifyOverdueWithActions(
-            this.app,
-            3,
-            (s as unknown).notifyMode ?? "both",
-            async () => { new Notice("(تست) باز کردن والت"); },
-            async () => { new Notice("(تست) تعویق"); }
-          );
-        })
-      );
-
-    // دکمهٔ تست مستقیم alerter
-    new Setting(containerEl)
-      .setName("تست alerter (macOS)")
-      .setDesc("مستقیم alerter را صدا می‌زند و نتیجه را در کنسول نشان می‌دهد.")
-      .addButton((b) =>
-        b.setButtonText("تست alerter").onClick(() => {
-          console.log("[RecoveryEngine] دکمهٔ تست alerter زده شد");
-          sendMacNotificationWithActions(
-            "Recovery Engine",
-            "این یک تست مستقیم از تنظیمات است",
-            [
-              { id: "open", label: "باز کردن والت" },
-              { id: "snooze", label: "تعویق" },
-            ],
-            (choice) => {
-              console.log("[RecoveryEngine] انتخاب کاربر:", choice);
-              new Notice("انتخاب شد: " + choice);
-            }
-          );
-        })
-      );
-
-    new Setting(containerEl).setName("تأیید پیش از حذف").addToggle((t) =>
-      t.setValue(s.requireConfirmOnDelete).onChange(async (v) => { s.requireConfirmOnDelete = v; await this.plugin.saveSettings(); })
-    );
-
-    // ---------- درس‌ها ----------
-    new Setting(containerEl).setName("درس‌ها").setHeading();
-    s.subjects.forEach((subj, idx) => this.renderSubject(containerEl, subj, idx));
-    new Setting(containerEl).addButton((b) =>
-      b.setButtonText("افزودن درس").onClick(async () => {
-        s.subjects.push({
-          id: `subj-${Date.now()}`,
-          name: "درس جدید",
-          archived: false,
-          checklist: [],
-        });
-        await this.plugin.saveSettings();
-        this.display();
-      })
-    );
-
-    // ---------- زمان‌بندی ----------
-    new Setting(containerEl).setName("چرخهٔ اولیه").setHeading();
-    new Setting(containerEl).setName("فعال").addToggle((t) =>
-      t.setValue(s.schedule.initial.enabled).onChange(async (v) => { s.schedule.initial.enabled = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(containerEl).setName("تعداد مرور").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.schedule.initial.count)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 0) { s.schedule.initial.count = n; await this.plugin.saveSettings(); }
-      });
-    });
-    new Setting(containerEl).setName("فاصله‌ها (روز، با کاما)").addText((t) =>
-      t.setValue(s.schedule.initial.offsets.join(",")).onChange(async (v) => {
-        s.schedule.initial.offsets = v.split(",").map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x));
-        await this.plugin.saveSettings();
-      })
-    );
-    new Setting(containerEl).setName("روز یادگیری = روز اول").addToggle((t) =>
-      t.setValue(s.schedule.countLearningDayAsFirst).onChange(async (v) => { s.schedule.countLearningDayAsFirst = v; await this.plugin.saveSettings(); })
-    );
-
-    new Setting(containerEl).setName("آخر هفته").setHeading();
-    new Setting(containerEl).setName("فعال").addToggle((t) =>
-      t.setValue(s.schedule.weekend.enabled).onChange(async (v) => { s.schedule.weekend.enabled = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(containerEl).setName("تعداد").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.schedule.weekend.count)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 0) { s.schedule.weekend.count = n; await this.plugin.saveSettings(); }
-      });
-    });
-    new Setting(containerEl).setName("روزهای هفته (0=شنبه، 1=یکشنبه، …، 6=جمعه)").addText((t) =>
-      t.setValue(s.schedule.weekend.weekdays.join(",")).onChange(async (v) => {
-        s.schedule.weekend.weekdays = v.split(",").map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x) && x >= 0 && x <= 6);
-        await this.plugin.saveSettings();
-      })
-    );
-
-    new Setting(containerEl).setName("ماهانه").setHeading();
-    new Setting(containerEl).setName("فعال").addToggle((t) =>
-      t.setValue(s.schedule.monthly.enabled).onChange(async (v) => { s.schedule.monthly.enabled = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(containerEl).setName("تعداد").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.schedule.monthly.count)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 0) { s.schedule.monthly.count = n; await this.plugin.saveSettings(); }
-      });
-    });
-    new Setting(containerEl).setName("فاصله‌ها (ماه)").addText((t) =>
-      t.setValue(s.schedule.monthly.offsetsMonths.join(",")).onChange(async (v) => {
-        s.schedule.monthly.offsetsMonths = v.split(",").map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x));
-        await this.plugin.saveSettings();
-      })
-    );
-    new Setting(containerEl).setName("روز تجمیع (1..31)").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.schedule.monthly.aggregationDay)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 1 && n <= 31) { s.schedule.monthly.aggregationDay = n; await this.plugin.saveSettings(); }
-      });
-    });
-    new Setting(containerEl).setName("قانون ماه کوتاه").addDropdown((d) => {
-      d.addOption("last-day", "آخرین روز ماه");
-      d.addOption("next-month-first", "اول ماه بعد");
-      d.setValue(s.schedule.monthly.shortMonthRule).onChange(async (v) => {
-        s.schedule.monthly.shortMonthRule = v as unknown; await this.plugin.saveSettings();
-      });
-    });
-
-    new Setting(containerEl).setName("بلندمدت").setHeading();
-    new Setting(containerEl).setName("فعال").addToggle((t) =>
-      t.setValue(s.schedule.longterm.enabled).onChange(async (v) => { s.schedule.longterm.enabled = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(containerEl).setName("تعداد").addText((t) => {
-      t.inputEl.type = "number";
-      t.setValue(String(s.schedule.longterm.count)).onChange(async (v) => {
-        const n = parseInt(v, 10);
-        if (!isNaN(n) && n >= 0) { s.schedule.longterm.count = n; await this.plugin.saveSettings(); }
-      });
-    });
-    new Setting(containerEl).setName("فاصله‌ها (ماه)").addText((t) =>
-      t.setValue(s.schedule.longterm.offsetsMonths.join(",")).onChange(async (v) => {
-        s.schedule.longterm.offsetsMonths = v.split(",").map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x));
-        await this.plugin.saveSettings();
-      })
-    );
-
-    // ---------- پشتیبان ----------
-    new Setting(containerEl).setName("پشتیبان‌گیری").setHeading();
-    new Setting(containerEl).setName("خروجی JSON").addButton((b) =>
-      b.setButtonText("دانلود").onClick(async () => {
+    // ========== داده‌ها ==========
+    containerEl.createEl("h2", { text: "داده‌ها" });
+    new Setting(containerEl).setName("خروجی گرفتن").addButton((b) =>
+      b.setButtonText("دانلود پشتیبان").onClick(async () => {
         const data = await this.plugin.exportData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        const a = createEl("a");
-        a.href = url;
-        a.download = `recovery-engine-backup-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        new Notice("پشتیبان ساخته شد.");
+        const a = document.createElement("a"); a.href = url; a.download = `recovery-engine-backup-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
+        new Notice("پشتیبان دانلود شد.");
       })
     );
-    new Setting(containerEl).setName("حذف همهٔ مطالب (با تأیید)").addButton((b) =>
+    const restoreSetting = new Setting(containerEl)
+      .setName("بازیابی از فایل")
+      .setDesc("فایل پشتیبان JSON را برای جایگزینی و بازگردانی اطلاعات انتخاب کنید.");
+
+    const fileBtn = restoreSetting.controlEl.createDiv({ cls: "re-file-btn mod-cta" });
+    fileBtn.setCssStyles({
+      position: "relative",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "6px 14px",
+      borderRadius: "8px",
+      background: "var(--interactive-accent)",
+      color: "var(--text-on-accent)",
+      fontSize: "12px",
+      fontWeight: "600",
+      cursor: "pointer",
+      overflow: "hidden"
+    });
+    fileBtn.createSpan({ text: "انتخاب فایل" });
+
+    const fileInput = fileBtn.createEl("input", { type: "file" });
+    fileInput.accept = ".json,application/json";
+    fileInput.setCssStyles({
+      position: "absolute",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      opacity: "0",
+      cursor: "pointer"
+    });
+
+    fileInput.onchange = async () => {
+      const file = fileInput.files?.[0];
+      if (file) {
+        await importBackupFromFile(this.plugin, file);
+      }
+      fileInput.value = "";
+    };
+    new Setting(containerEl).setName("حذف همه مطالب").addButton((b) =>
       b.setButtonText("حذف همه").setWarning().onClick(async () => {
-        const c1 = confirm("همهٔ مطالب برای همیشه حذف شوند؟");
-        if (!c1) return;
-        const c2 = confirm("مطمئنید؟ این عملیات قابل بازگشت نیست.");
-        if (!c2) return;
-        await this.plugin.deleteAllItems();
-        new Notice("همهٔ مطالب حذف شدند.");
+        if (confirm("همه مطالب حذف شوند؟")) { await this.plugin.deleteAllItems(); new Notice("همه مطالب حذف شدند."); }
       })
-    );
-
-    new Setting(containerEl)
-      .setName("بازنشانی کامل")
-      .setDesc("همهٔ داده‌ها و تنظیمات به حالت اولیه برمی‌گردد (غیرقابل بازگشت).")
-      .addButton((b) =>
-        b.setButtonText("بازنشانی").setWarning().onClick(async () => {
-          if (!confirm("همهٔ داده‌ها و تنظیمات حذف شوند؟")) return;
-          if (!confirm("مطمئنید؟ این کار قابل بازگشت نیست.")) return;
-          await this.plugin.resetAll();
-          new Notice("همه چیز به حالت اولیه برگشت.");
-        })
-      );
-
-    new Setting(containerEl).setName("بازیابی از فایل").addButton((b) =>
-      b.setButtonText("انتخاب فایل").onClick(() => importBackupFromFile(this.plugin))
     );
   }
 
-  private renderSubject(containerEl: HTMLElement, subj: Subject, idx: number) {
-    const box = containerEl.createDiv({ cls: "re-subject-box" });
-    new Setting(box).setName("نام درس").addText((t) =>
-      t.setValue(subj.name).onChange(async (v) => { subj.name = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(box).setName("بایگانی").addToggle((t) =>
-      t.setValue(subj.archived).onChange(async (v) => { subj.archived = v; await this.plugin.saveSettings(); })
-    );
-    new Setting(box).setName("چک‌لیست (هر خط یک آیتم)").addTextArea((t) => {
-      t.setValue(subj.checklist.join("\n"));
-      t.inputEl.rows = 4;
-      t.onChange(async (v) => {
-        subj.checklist = v.split("\n").map((x) => x.trim()).filter(Boolean);
-        await this.plugin.saveSettings();
-      });
+  // ========== باکس هر چرخه ==========
+  private renderCycleBox(wrapper: HTMLElement, kind: string, title: string) {
+    const s = this.plugin.settings;
+    const list = (s.schedule as any)[kind];
+
+    // ساخت باکس
+    const box = wrapper.createEl("div", { cls: "re-cycle-box" });
+    box.setCssStyles({
+      padding: "16px",
+      background: "var(--background-secondary)",
+      border: "1px solid var(--background-modifier-border)",
+      borderRadius: "12px",
+      marginBottom: "12px",
     });
-    new Setting(box).addButton((b) =>
-      b.setButtonText("حذف درس").setWarning().onClick(async () => {
-        if (!confirm(`درس «${subj.name}» حذف شود؟ مطالبش حذف نمی‌شوند اما درس نامعلوم می‌شوند.`)) return;
-        this.plugin.settings.subjects.splice(idx, 1);
+
+    // هدر باکس: عنوان + سوییچ
+    const header = box.createEl("div");
+    header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" });
+    header.createEl("h3", { text: title });
+    header.querySelector("h3")!.setCssStyles({ margin: "0", fontSize: "16px" });
+
+    const toggleLabel = header.createEl("label");
+    toggleLabel.setCssStyles({ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" });
+    toggleLabel.createEl("span", { text: list.enabled ? "فعال" : "غیرفعال" });
+    const toggle = toggleLabel.createEl("input");
+    toggle.type = "checkbox";
+    toggle.checked = list.enabled;
+    toggle.onchange = async () => {
+      list.enabled = toggle.checked;
+      await this.plugin.saveSettings();
+      // رندر مجدد فقط همین باکس (بدون پرش)
+      wrapper.empty();
+      this.renderCycleBox(wrapper, "initial", "مرورهای اولیه");
+      this.renderCycleBox(wrapper, "weekend", "مرورهای هفتگی");
+      this.renderCycleBox(wrapper, "monthly", "مرورهای ماهانه");
+      this.renderCycleBox(wrapper, "longterm", "مرورهای بلندمدت");
+    };
+
+    if (!list.enabled) return;
+
+    // فیلد روز تجمیع (فقط برای ماهانه)
+    if (kind === "monthly") {
+      const row = box.createEl("div");
+      row.setCssStyles({ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", padding: "8px", background: "var(--background-primary)", borderRadius: "8px" });
+      row.createEl("span", { text: "روز تجمیع در ماه:", style: "font-size: 13px;" });
+      const dayInput = row.createEl("input");
+      dayInput.type = "number";
+      dayInput.min = "1";
+      dayInput.max = "31";
+      dayInput.value = String(list.aggregationDay || 25);
+      dayInput.setCssStyles({ width: "60px", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" });
+      dayInput.onchange = async () => {
+        const n = parseInt(dayInput.value, 10);
+        if (!isNaN(n) && n >= 1 && n <= 31) {
+          list.aggregationDay = n;
+          await this.plugin.saveSettings();
+        }
+      };
+    }
+
+    // لیست مرورها (فشرده)
+    const listEl = box.createEl("div");
+    listEl.setCssStyles({ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" });
+
+    for (let i = 0; i < list.count; i++) {
+      const row = listEl.createEl("div");
+      row.setCssStyles({
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 12px",
+        background: "var(--background-primary)",
+        borderRadius: "8px",
+        border: "1px solid var(--background-modifier-border)",
+      });
+
+      row.createEl("span", { text: `مرور ${i + 1}`, style: "font-size: 13px; min-width: 60px;" });
+
+      const select = row.createEl("select");
+      select.setCssStyles({ flex: "1", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" });
+
+      if (kind === "initial") {
+        for (let dOff = 0; dOff <= 14; dOff++) {
+          const opt = select.createEl("option", { value: String(dOff), text: dOff === 0 ? "همان روز" : `${dOff} روز بعد` });
+        }
+        select.value = String(list.offsets[i] ?? i);
+        select.onchange = async () => {
+          list.offsets[i] = parseInt(select.value, 10);
+          await this.plugin.saveSettings();
+        };
+      } else if (kind === "monthly") {
+        select.createEl("option", { value: "0", text: "همان ماه" });
+        for (let m = 1; m <= 24; m++) {
+          select.createEl("option", { value: String(m), text: `${m} ماه بعد` });
+        }
+        select.value = String(list.offsetsMonths[i] ?? i);
+        select.onchange = async () => {
+          list.offsetsMonths[i] = parseInt(select.value, 10);
+          await this.plugin.saveSettings();
+        };
+      } else if (kind === "longterm") {
+        for (let m = 1; m <= 24; m++) {
+          select.createEl("option", { value: String(m), text: `${m} ماه بعد` });
+        }
+        select.value = String(list.offsetsMonths[i] ?? (i + 1) * 6);
+        select.onchange = async () => {
+          list.offsetsMonths[i] = parseInt(select.value, 10);
+          await this.plugin.saveSettings();
+        };
+      } else if (kind === "weekend") {
+        select.remove();
+        const dayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
+        const daySelect = row.createEl("select");
+        daySelect.setCssStyles({ flex: "1", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" });
+        dayNames.forEach((name, idx) => daySelect.createEl("option", { value: String(idx), text: name }));
+        daySelect.value = String(list.weekdays[i] ?? (i + 5) % 7);
+        daySelect.onchange = async () => {
+          list.weekdays[i] = parseInt(daySelect.value, 10);
+          await this.plugin.saveSettings();
+        };
+      }
+
+      // دکمه حذف
+      const delBtn = row.createEl("button", { text: "×" });
+      delBtn.setCssStyles({ width: "28px", height: "28px", borderRadius: "6px", background: "var(--background-modifier-error)", color: "white", border: "none", cursor: "pointer", fontSize: "16px", padding: "0" });
+      delBtn.onclick = async () => {
+        if (kind === "initial") list.offsets.splice(i, 1);
+        else if (kind === "monthly" || kind === "longterm") list.offsetsMonths.splice(i, 1);
+        else if (kind === "weekend") list.weekdays.splice(i, 1);
+        list.count--;
         await this.plugin.saveSettings();
-        this.display();
-      })
-    );
+        wrapper.empty();
+        this.renderCycleBox(wrapper, "initial", "مرورهای اولیه");
+        this.renderCycleBox(wrapper, "weekend", "مرورهای هفتگی");
+        this.renderCycleBox(wrapper, "monthly", "مرورهای ماهانه");
+        this.renderCycleBox(wrapper, "longterm", "مرورهای بلندمدت");
+      };
+    }
+
+    // دکمه افزودن
+    const addBtn = box.createEl("button", { text: "+ افزودن مرور" });
+    addBtn.setCssStyles({
+      padding: "6px 14px",
+      borderRadius: "8px",
+      background: "var(--interactive-accent)",
+      color: "white",
+      border: "none",
+      cursor: "pointer",
+      fontSize: "12px",
+      fontWeight: "600",
+    });
+    addBtn.onclick = async () => {
+      if (kind === "initial") {
+        list.offsets.push(list.offsets.length > 0 ? list.offsets[list.offsets.length - 1] + 1 : 0);
+        list.count = list.offsets.length;
+      } else if (kind === "weekend") {
+        list.weekdays.push(5);
+        list.count = list.weekdays.length;
+      } else if (kind === "monthly") {
+        list.offsetsMonths.push(list.offsetsMonths.length);
+        list.count = list.offsetsMonths.length;
+      } else if (kind === "longterm") {
+        list.offsetsMonths.push((list.offsetsMonths.length + 1) * 6);
+        list.count = list.offsetsMonths.length;
+      }
+      await this.plugin.saveSettings();
+      wrapper.empty();
+      this.renderCycleBox(wrapper, "initial", "مرورهای اولیه");
+      this.renderCycleBox(wrapper, "weekend", "مرورهای هفتگی");
+      this.renderCycleBox(wrapper, "monthly", "مرورهای ماهانه");
+      this.renderCycleBox(wrapper, "longterm", "مرورهای بلندمدت");
+    };
+  }
+
+  private renderSubject(container: HTMLElement, subj: Subject, idx: number) {
+    const box = container.createEl("div", { cls: "re-cycle-box" });
+    box.setCssStyles({
+      padding: "16px",
+      background: "var(--background-secondary)",
+      border: "1px solid var(--background-modifier-border)",
+      borderRadius: "12px",
+      marginBottom: "12px",
+    });
+
+    // هدر: نام درس و دکمه حذف
+    const header = box.createEl("div");
+    header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" });
+
+    const nameInput = header.createEl("input");
+    nameInput.type = "text";
+    nameInput.value = subj.name;
+    nameInput.setCssStyles({ flex: "1", padding: "4px 8px", fontSize: "16px", fontWeight: "bold", background: "transparent", border: "none", color: "var(--text-normal)", outline: "none" });
+    nameInput.onchange = async () => {
+      subj.name = nameInput.value;
+      await this.plugin.saveSettings();
+    };
+
+    const delSubjectBtn = header.createEl("button", { text: "×" });
+    delSubjectBtn.setCssStyles({ width: "28px", height: "28px", borderRadius: "6px", background: "var(--background-modifier-error)", color: "white", border: "none", cursor: "pointer", fontSize: "16px", padding: "0" });
+    delSubjectBtn.onclick = async () => {
+      if (!confirm(`درس «${subj.name}» حذف شود؟`)) return;
+      this.plugin.settings.subjects.splice(idx, 1);
+      await this.plugin.saveSettings();
+      this.display();
+    };
+
+    // سوییچ بایگانی
+    const archiveRow = box.createEl("div");
+    archiveRow.setCssStyles({ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" });
+    const archiveCb = archiveRow.createEl("input", { type: "checkbox" });
+    archiveCb.checked = subj.archived;
+    archiveCb.onchange = async () => {
+      subj.archived = archiveCb.checked;
+      await this.plugin.saveSettings();
+    };
+    archiveRow.createEl("span", { text: "بایگانی شده (در فرم ثبت مطلب نمایش داده نشود)", style: "font-size: 12px; color: var(--text-muted);" });
+
+    // بخش چک‌لیست
+    box.createEl("div", { text: "چک‌لیست مرور:", style: "font-size: 13px; font-weight: 600; margin-bottom: 8px; margin-top: 8px;" });
+    
+    const checklistWrapper = box.createEl("div");
+    checklistWrapper.setCssStyles({ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" });
+
+    const renderChecklist = () => {
+      checklistWrapper.empty();
+      subj.checklist.forEach((item, itemIdx) => {
+        const row = checklistWrapper.createEl("div");
+        row.setCssStyles({
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "6px 10px", background: "var(--background-primary)",
+          borderRadius: "8px", border: "1px solid var(--background-modifier-border)"
+        });
+
+        const input = row.createEl("input", { type: "text", value: item });
+        input.setCssStyles({ flex: "1", padding: "4px 8px", background: "transparent", border: "none", color: "var(--text-normal)", outline: "none", fontSize: "13px" });
+        input.onchange = async () => {
+          subj.checklist[itemIdx] = input.value;
+          await this.plugin.saveSettings();
+        };
+
+        const delBtn = row.createEl("button", { text: "×" });
+        delBtn.setCssStyles({ width: "24px", height: "24px", borderRadius: "4px", background: "var(--background-modifier-error)", color: "white", border: "none", cursor: "pointer", fontSize: "14px", padding: "0" });
+        delBtn.onclick = async () => {
+          subj.checklist.splice(itemIdx, 1);
+          await this.plugin.saveSettings();
+          renderChecklist();
+        };
+      });
+    };
+
+    renderChecklist();
+
+    // دکمه افزودن آیتم
+    const addBtn = box.createEl("button", { text: "+ افزودن آیتم چک‌لیست" });
+    addBtn.setCssStyles({
+      padding: "6px 14px", borderRadius: "8px", background: "var(--interactive-accent)", color: "white",
+      border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "600"
+    });
+    addBtn.onclick = async () => {
+      subj.checklist.push("");
+      await this.plugin.saveSettings();
+      renderChecklist();
+    };
   }
 }

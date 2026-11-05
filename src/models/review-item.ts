@@ -32,6 +32,8 @@ export interface ReviewItem {
   source: string;
   rangeFrom: string;
   rangeTo: string;
+  /** بلاک آیدی برای لینک به بلاک خاص در فایل منبع */
+  sourceBlockId?: string;
   notes: string;
   customFields: Record<string, string>;
   reviews: ReviewSession[];

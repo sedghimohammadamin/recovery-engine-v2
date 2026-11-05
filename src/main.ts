@@ -64,6 +64,14 @@ export default class RecoveryEnginePlugin extends Plugin {
       const today = todayISO();
       const due = items.flatMap((i) => i.reviews.filter((r) => !r.completed && r.dueDate === today).map((r) => ({ i, r })));
       const overdue = items.flatMap((i) => i.reviews.filter((r) => !r.completed && r.dueDate < today).map((r) => ({ i, r })));
+
+      // روی موبایل فقط از Notice استفاده میکنیم
+      if (Platform.isMobileApp) {
+        if (overdue.length > 0) new Notice(`⚠️ ${overdue.length} مرور عقب‌افتاده داری.`);
+        if (due.length > 0) new Notice(`📅 ${due.length} مرور برای امروز داری.`);
+        return;
+      }
+
       const mode = (this.settings as unknown).notifyMode ?? "both";
 
       if (this.settings.notifyOverdue && overdue.length > 0) {
@@ -109,30 +117,7 @@ export default class RecoveryEnginePlugin extends Plugin {
    */
   private openVault() {
     const id = this.settings.vaultId?.trim() || "2684169028beb4f9";
-    const uri = `obsidian://open?vault=${encodeURIComponent(id)}`;
-    console.log("[RecoveryEngine] openVault called with uri:", uri);
-
-    try {
-      const req = (window as unknown).require;
-      if (typeof req !== "function") {
-        console.error("[RecoveryEngine] window.require در دسترس نیست");
-        window.open(uri, "_blank");
-        return;
-      }
-      const { exec } = req("child_process");
-      const cmd = `open "${uri}"`;
-      console.log("[RecoveryEngine] exec:", cmd);
-      exec(cmd, (err: unknown, stdout: string, stderr: string) => {
-        console.log("[RecoveryEngine] open stdout:", stdout, "stderr:", stderr, "err:", err);
-        if (err) {
-          console.error("[RecoveryEngine] open error:", err);
-          new Notice("خطا در باز کردن والت. کنسول را ببین.");
-        }
-      });
-    } catch (e) {
-      console.error("[RecoveryEngine] catch در openVault:", e);
-      window.open(uri, "_blank");
-    }
+    openVaultUri(id);
   }
 
   async openView(type: string) {

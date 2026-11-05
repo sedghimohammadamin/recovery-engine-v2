@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice, TFile, setIcon } from "obsidian";
 import RecoveryEnginePlugin from "../main";
-import { computeBuckets, markCompleted, snoozeReview } from "../services/review-service";
+import { computeBuckets, markCompleted, snoozeReview, unsnoozeReview } from "../services/review-service";
 import { AddItemModal } from "../modals/add-item-modal";
 import { ChecklistModal } from "../modals/checklist-modal";
 import { ItemDetailsModal } from "./item-details-modal";
@@ -76,6 +76,9 @@ export class DashboardView extends ItemView {
   private calYear: number;
   private calMonth: number;
 
+  private isRendering = false;
+  private pendingRender = false;
+
   constructor(leaf: WorkspaceLeaf, private plugin: RecoveryEnginePlugin) {
     super(leaf);
     const t = todayJalali();
@@ -87,8 +90,24 @@ export class DashboardView extends ItemView {
   getDisplayText() { return "Recovery Engine"; }
   getIcon() { return "calendar-check"; }
 
-  async onOpen() { this.render(); }
-  refresh() { this.render(); }
+  async onOpen() { await this.refresh(); }
+
+  async refresh() {
+    if (this.isRendering) {
+      this.pendingRender = true;
+      return;
+    }
+    this.isRendering = true;
+    try {
+      await this.render();
+    } finally {
+      this.isRendering = false;
+      if (this.pendingRender) {
+        this.pendingRender = false;
+        setTimeout(() => this.refresh(), 10);
+      }
+    }
+  }
 
   private fmt(iso: string): string {
     const j = isoToJalali(iso);
@@ -98,7 +117,7 @@ export class DashboardView extends ItemView {
   }
 
   private async render() {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     container.empty();
     container.addClass("recovery-engine-dashboard");
     container.setAttr("dir", "rtl");
@@ -198,7 +217,7 @@ export class DashboardView extends ItemView {
       sec.createEl("h3", { text: `تعویق‌شده‌ها (${buckets.snoozed.length})` });
       const t = sec.createEl("table", { cls: "re-table" });
       const h = t.createEl("tr");
-      ["درس", "مبحث", "نوع مرور", "تا تاریخ"].forEach((x) => h.createEl("th", { text: x }));
+      ["درس", "مبحث", "نوع مرور", "تا تاریخ", "عملیات"].forEach((x) => h.createEl("th", { text: x }));
       for (const r of buckets.snoozed) {
         const subj = this.plugin.settings.subjects.find((s) => s.id === r.item.subjectId);
         const row = t.createEl("tr");
@@ -206,6 +225,14 @@ export class DashboardView extends ItemView {
         row.createEl("td", { text: r.item.title });
         row.createEl("td", { text: r.review.label });
         row.createEl("td", { text: this.fmt(r.untilDate) });
+        
+        const ops = row.createEl("td");
+        const unsnoozeBtn = ops.createEl("button", { text: "برگرداندن" });
+        unsnoozeBtn.onclick = async () => {
+          unsnoozeReview(r.item, r.review.id);
+          await this.plugin.saveItem(r.item);
+          new Notice("تعویق لغو شد.");
+        };
       }
     }
   }
@@ -316,7 +343,8 @@ export class DashboardView extends ItemView {
     }
   }
 
-  private async openSourceInCurrentPane(src: string) {
+  private async openSourceInCurrentPane(src: string, blockId?: string) {
+    if (blockId) src += `#^${blockId}`;
     const clean = src.trim();
     if (!clean) return;
     const file = this.app.vault.getAbstractFileByPath(clean);
@@ -370,10 +398,13 @@ export class DashboardView extends ItemView {
       table.setCssStyles({ margin: "0" });
       
       const head = table.createEl("tr");
-      ["مبحث", "نوع مرور", "موعد", "وضعیت", "منبع", "عملیات"].forEach((h) => head.createEl("th", { text: h }));
+      ["تاریخ یادگیری", "مبحث", "نوع مرور", "موعد مرور", "وضعیت", "منبع", "عملیات"].forEach((h) => head.createEl("th", { text: h }));
 
       for (const r of subjRows) {
         const tr = table.createEl("tr");
+        
+        // تاریخ یادگیری (با روز هفته)
+        tr.createEl("td", { text: this.fmt(r.item.learnedAt) });
         
         const titleCell = tr.createEl("td", { text: r.item.title });
         titleCell.setCssStyles({ cursor: "pointer" });
@@ -392,7 +423,7 @@ export class DashboardView extends ItemView {
         if (r.item.source) {
           const srcBtn = srcCell.createEl("button", { text: "باز کردن" });
           srcBtn.setCssStyles({ fontSize: "11px", padding: "3px 6px" });
-          srcBtn.onclick = () => this.openSourceInCurrentPane(r.item.source);
+          srcBtn.onclick = () => this.openSourceInCurrentPane(r.item.source, r.item.sourceBlockId);
         } else {
           srcCell.textContent = "—";
         }
@@ -408,7 +439,6 @@ export class DashboardView extends ItemView {
               if (rev) rev.checklistDone = cl;
               await this.plugin.saveItem(r.item);
               new Notice("مرور ثبت شد.");
-              this.refresh();
             }).open();
             
           const snoozeBtn = ops.createEl("button", { text: "⏰ تعویق" });
@@ -417,7 +447,6 @@ export class DashboardView extends ItemView {
             snoozeReview(r.item, r.review.id, 1);
             await this.plugin.saveItem(r.item);
             new Notice("به فردا موکول شد.");
-            this.refresh();
           };
         }
         const detailsBtn = ops.createEl("button", { text: "جزئیات" });

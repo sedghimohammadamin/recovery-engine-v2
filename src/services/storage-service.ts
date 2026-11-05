@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: RecoverySettings = {
     countLearningDayAsFirst: true,
     initial: { enabled: true, count: 3, offsets: [0, 1, 2] },
     weekend: { enabled: true, count: 2, weekdays: [4, 5] },
-    monthly: { enabled: true, count: 3, offsetsMonths: [1, 2, 3], aggregationDay: 25, shortMonthRule: "last-day" },
+    monthly: { enabled: true, count: 3, offsetsMonths: [0, 1, 2], aggregationDay: 25, shortMonthRule: "last-day" },
     longterm: { enabled: true, count: 1, offsetsMonths: [6], useOwnAggregation: false, aggregationDay: 25 },
   },
 };

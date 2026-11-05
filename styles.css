@@ -1,480 +1,352 @@
-/* ========================================================
-   RECOVERY ENGINE — CLEAN MODERN FLAT UI
-   ======================================================== */
-
+/* پدینگ صفحه اصلی و جلوگیری از تداخل */
+.workspace-leaf-content[data-type="recovery-engine-dashboard"] .view-content,
 .recovery-engine-dashboard {
-  direction: rtl;
-  padding: 12px 16px;
-  font-family: var(--font-interface), "Vazirmatn", sans-serif;
-  color: var(--text-normal);
-  max-width: 100%;
-  margin: 0;
-  background: var(--background-primary);
+  direction: rtl !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+  padding: 24px 32px !important; /* پدینگ استاندارد و منظم */
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  background: var(--background-primary) !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  overflow-y: auto !important;
 }
 
-/* هدر */
+/* --- هدر --- */
 .re-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .re-header h2 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-normal);
 }
 
 .re-header button {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border: none;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-weight: 600;
+  background: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.re-header button:hover {
-  background: var(--interactive-accent-hover);
-}
-
-/* آمار */
+/* --- کارت‌های آمار --- */
 .re-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 16px !important;
 }
 
 .re-stat {
-  background: var(--background-secondary);
-  padding: 18px;
-  border-radius: 16px;
-  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary) !important;
+  padding: 24px 16px !important; /* پدینگ داخلی */
+  border-radius: 16px !important;
+  border: 1px solid var(--background-modifier-border) !important;
   text-align: center;
+  box-sizing: border-box !important;
 }
 
 .re-stat-num {
   font-size: 28px;
-  font-weight: 700;
-  color: var(--text-normal);
-  margin-bottom: 4px;
+  font-weight: 800;
+  color: var(--text-accent);
+  margin-bottom: 8px;
 }
 
 .re-stat-label {
   font-size: 13px;
   color: var(--text-muted);
+  font-weight: 600;
 }
 
-/* بخش‌ها */
+/* --- بخش‌ها (سکشن‌ها) --- */
 .re-section {
-  margin-bottom: 24px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 16px;
-  overflow: hidden;
+  background: var(--background-primary) !important;
+  border-radius: 16px !important;
+  padding: 24px !important; /* پدینگ داخلی سکشن */
+  border: 1px solid var(--background-modifier-border) !important;
+  box-sizing: border-box !important;
 }
 
 .re-section h3 {
-  margin: 0;
-  padding: 14px 18px;
-  font-size: 16px;
-  font-weight: 700;
-  background: var(--background-secondary);
+  margin: 0 0 20px !important;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-normal);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 12px;
 }
 
 .re-empty {
-  padding: 12px 16px;
+  padding: 32px !important;
   text-align: center;
   color: var(--text-faint);
-  font-size: 13px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  font-size: 14px;
 }
 
-/* جدول */
+/* --- باکس فیلتر --- */
+.re-filter-bar {
+  display: flex;
+  gap: 16px !important;
+  padding: 16px 24px !important; /* پدینگ چپ و راست و بالا و پایین */
+  background: var(--background-secondary) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  align-items: center;
+  flex-wrap: wrap;
+  box-sizing: border-box !important;
+}
+
+.re-filter-bar span {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.re-filter-bar select,
+.re-filter-bar input {
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  background: var(--background-primary) !important;
+  color: var(--text-normal) !important;
+  font-size: 13px;
+  outline: none;
+}
+
+/* --- گروه‌بندی درس‌ها و جدول --- */
+.re-subject-group {
+  margin-top: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.re-subject-header {
+  padding: 12px 16px !important;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-weight: 800;
+  color: var(--text-accent);
+  font-size: 14px;
+}
+
 .re-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  table-layout: auto !important;
+  font-size: 14px;
 }
 
 .re-table th {
-  padding: 12px;
+  padding: 12px 10px !important;
   text-align: right;
   color: var(--text-muted);
-  font-weight: 600;
   font-size: 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  font-weight: 700;
   background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .re-table td {
-  padding: 12px;
+  padding: 12px 10px !important;
   border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
 }
 
-.re-table tr:last-child td {
-  border-bottom: none;
+.re-table th:last-child,
+.re-table td:last-child {
+  min-width: 240px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
-.re-table tr:hover td {
-  background: var(--background-secondary);
+.re-table td:last-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border-bottom: 1px solid var(--background-modifier-border) !important;
 }
 
 .re-table button {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  background: var(--background-primary) !important;
+  color: var(--text-normal) !important;
   cursor: pointer;
   font-size: 12px;
-  margin-left: 4px;
+  font-weight: 600;
+  white-space: nowrap !important;
+  margin-left: 6px;
 }
 
 .re-table button:hover {
-  background: var(--background-secondary);
+  background: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--interactive-accent) !important;
 }
 
-/* مودال چک‌لیست */
-.re-checklist-modal {
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
+/* =========================================
+   تقویم (بدون !important در رنگ‌ها)
+   ========================================= */
+
+.re-cal-container {
+  margin-top: 8px;
 }
 
-.re-checklist-content {
-  padding: 12px 16px;
-  direction: rtl;
-  /* اسکرول در صورت زیاد بودن آیتم‌ها */
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.re-checklist-content h2 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.re-checklist-sub {
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
-.re-checklist-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.re-checklist-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--background-secondary);
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.re-checklist-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--interactive-accent);
-  cursor: pointer;
-}
-
-.re-checklist-text {
-  font-size: 14px;
-  color: var(--text-normal);
-}
-
-.re-checklist-footer {
-  padding: 16px 24px;
-  background: var(--background-secondary);
-  border-top: 1px solid var(--background-modifier-border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.re-checklist-footer button {
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-}
-
-.re-checklist-footer button.mod-cta {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
-}
-
-.re-checklist-footer button.mod-cta:hover {
-  background: var(--interactive-accent-hover);
-}
-
-/* مودال جزئیات */
-.re-detail-modal {
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  display: flex;
-  flex-direction: column;
-}
-
-.re-detail-content {
-  padding: 12px 16px;
-  direction: rtl;
-  /* مهم: اسکرول */
-  flex: 1;
-  overflow-y: auto;
-  max-height: calc(90vh - 60px);
-}
-
-.re-detail-content h2 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.re-source-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0 16px;
-  padding: 12px 16px;
-  background: var(--background-secondary);
-  border-radius: 12px;
-}
-
-.re-source-row button {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border: none;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.re-detail-footer {
-  padding: 16px 0 0;
-}
-
-/* دستگیره ریسایز مودال جزئیات */
-.re-resize-handle {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  z-index: 20;
-  background:
-    linear-gradient(135deg, transparent 45%, var(--interactive-accent) 45%, var(--interactive-accent) 50%, transparent 50%),
-    linear-gradient(135deg, transparent 65%, var(--interactive-accent) 65%, var(--interactive-accent) 70%, transparent 70%);
-  opacity: 0.5;
-}
-
-.re-resize-handle:hover {
-  opacity: 1;
-}
-
-/* تقویم */
 .re-cal-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 16px !important;
+  padding: 12px 16px !important;
+  background: var(--background-secondary) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--background-modifier-border) !important;
 }
 
-.re-cal-header h3 {
-  flex: 1;
-  text-align: center;
+.re-cal-header h4 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
-}
-
-.re-cal-header button {
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--text-normal);
-}
-
-.re-cal-header button:hover {
-  background: var(--background-modifier-hover);
+  font-weight: 800;
 }
 
 .re-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.re-cal-dow {
-  text-align: center;
-  font-weight: 700;
-  font-size: 11px;
-  padding: 8px;
-  color: var(--text-muted);
+  gap: 8px !important; /* فاصله بین سلول‌ها */
 }
 
 .re-cal-cell {
-  min-height: 70px;
-  padding: 8px;
-  border-radius: 10px;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  cursor: pointer;
-  position: relative;
-}
-
-.re-cal-cell:hover {
-  background: var(--background-modifier-hover);
-}
-
-.re-cal-cell.empty {
-  background: transparent;
-  border-color: transparent;
-  cursor: default;
-}
-
-.re-cal-cell.has-pending {
-  border-color: var(--text-error);
-}
-
-.re-cal-day {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text-normal);
-}
-
-.re-cal-count {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  padding: 1px 6px;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.re-cal-details {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--background-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--background-modifier-border);
-}
-
-/* تنظیمات */
-.re-subject-box {
-  background: var(--background-secondary);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid var(--background-modifier-border);
-}
-
-/* فیلتر */
-.re-filter-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  padding: 12px;
-  background: var(--background-secondary);
-  border-radius: 14px;
-  border: 1px solid var(--background-modifier-border);
-}
-
-.re-filter-bar input, .re-filter-bar select {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  font-size: 13px;
-  outline: none;
-  flex: 1;
-  min-width: 120px;
-}
-
-.re-filter-bar input:focus, .re-filter-bar select:focus {
-  border-color: var(--interactive-accent);
-}
-
-/* تقویم */
-.re-cal-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.re-cal-header button {
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-}
-.re-cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-.re-cal-cell {
-  min-height: 80px;
-  padding: 8px;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  cursor: pointer;
+  min-height: 64px;
+  padding: 8px !important;
+  border-radius: 12px !important;
+  /* رنگ پس‌زمینه توسط کد JS اعمال می‌شود، اینجا ست نمی‌کنیم */
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-.re-cal-cell:hover {
-  border-color: var(--interactive-accent);
-}
-.re-cal-cell.empty {
-  background: transparent;
-  border: none;
-  cursor: default;
+  font-size: 13px;
+  box-sizing: border-box !important;
 }
 
-/* ---- پر کردن عرض با padding مناسب ---- */
-.workspace-leaf-content[data-type="recovery-engine-dashboard"] .view-content {
-  padding: 0 !important;
-  max-width: none !important;
+.re-cal-cell.empty {
+  background: transparent !important;
+  border: none !important;
 }
-.workspace-leaf-content[data-type="recovery-engine-dashboard"] .recovery-engine-dashboard {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  padding: 24px 32px !important;
+
+.re-cal-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* --- تولتیپ --- */
+.re-cal-cell.re-has-tooltip {
+  position: relative;
+}
+.re-cal-cell.re-has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  right: 50%;
+  transform: translateX(50%);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  white-space: pre-line;
+  text-align: right;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 1000;
+  min-width: 140px;
+  max-width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--background-modifier-border);
+  margin-bottom: 6px;
+}
+.re-cal-cell.re-has-tooltip:hover::after { opacity: 1; }
+
+/* =========================================
+   تنظیمات (باکس‌ها)
+   ========================================= */
+
+.re-cycle-box,
+.re-subject-box {
+  padding: 20px !important; /* پدینگ داخلی باکس */
+  margin-bottom: 20px !important; /* مارجین بین باکس‌ها */
+  background: var(--background-secondary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  border-radius: 16px !important;
+  box-sizing: border-box !important;
+}
+
+/* =========================================
+   مودال‌ها
+   ========================================= */
+
+.re-add-modal,
+.re-checklist-modal,
+.re-detail-modal {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: var(--background-primary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 85vh !important;
+}
+
+.re-add-content,
+.re-checklist-content,
+.re-detail-content {
+  padding: 24px !important;
+  direction: rtl;
+  overflow-y: auto !important; /* اسکرول */
+  flex: 1 !important;
+}
+
+.re-checklist-footer {
+  padding: 16px 24px !important;
+  background: var(--background-secondary) !important;
+  border-top: 1px solid var(--background-modifier-border) !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0 !important;
+}
+
+.re-datepicker-modal {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: var(--background-primary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+}
+
+.re-datepicker-content {
+  padding: 24px !important;
+  direction: rtl;
 }
