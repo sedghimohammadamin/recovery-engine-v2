@@ -18,7 +18,7 @@ function kindOrder(kind: ReviewKind): number {
   }
 }
 
-function compareByDueAndKind(a: any, b: any): number {
+function compareByDueAndKind(a: unknown, b: unknown): number {
   if (a.review.dueDate !== b.review.dueDate) {
     return a.review.dueDate < b.review.dueDate ? -1 : 1;
   }

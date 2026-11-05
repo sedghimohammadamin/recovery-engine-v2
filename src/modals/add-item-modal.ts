@@ -50,7 +50,7 @@ export class AddItemModal extends Modal {
 
     // تاریخ یادگیری
     const dateSetting = new Setting(contentEl).setName("تاریخ یادگیری");
-    const dateRow = dateSetting.controlEl.createEl("div");
+    const dateRow = dateSetting.controlEl.createDiv();
     dateRow.setCssStyles({ display: "flex", gap: "8px" });
 
     const todayBtn = dateRow.createEl("button", { text: "امروز" });
@@ -69,7 +69,7 @@ export class AddItemModal extends Modal {
       }).open();
     };
 
-    this.dateLabelEl = contentEl.createEl("div", { cls: "re-date-label" });
+    this.dateLabelEl = contentEl.createDiv({ cls: "re-date-label" });
     this.dateLabelEl.setCssStyles({ marginBottom: "16px", fontSize: "14px", color: "var(--text-accent)" });
     this.updateDateLabel();
 
@@ -83,7 +83,7 @@ export class AddItemModal extends Modal {
 
     // پیش‌نمایش
     contentEl.createEl("h3", { text: "پیش‌نمایش برنامه مرور" });
-    const calWrapper = contentEl.createEl("div", { cls: "re-preview-cal-wrapper" });
+    const calWrapper = contentEl.createDiv({ cls: "re-preview-cal-wrapper" });
     calWrapper.setCssStyles({ padding: "12px", background: "var(--background-secondary)", borderRadius: "10px", marginBottom: "16px" });
     this.updatePreview(calWrapper);
 

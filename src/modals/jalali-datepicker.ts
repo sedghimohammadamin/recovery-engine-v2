@@ -49,7 +49,7 @@ export class JalaliDatePickerModal extends Modal {
     };
 
     // هدر تقویم
-    const header = contentEl.createEl("div", { cls: "re-datepicker-header" });
+    const header = contentEl.createDiv({ cls: "re-datepicker-header" });
     header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" });
 
     const prev = header.createEl("button", { text: "‹" });
@@ -73,13 +73,13 @@ export class JalaliDatePickerModal extends Modal {
     };
 
     // شبکه
-    const grid = contentEl.createEl("div", { cls: "re-datepicker-grid" });
+    const grid = contentEl.createDiv({ cls: "re-datepicker-grid" });
     grid.setCssStyles({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" });
     this.gridEl = grid;
 
     const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
     weekDays.forEach(d => {
-      const cell = grid.createEl("div", { text: d });
+      const cell = grid.createDiv({ text: d });
       cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "8px", color: "var(--text-muted)" });
     });
 
@@ -87,7 +87,7 @@ export class JalaliDatePickerModal extends Modal {
     this.renderGrid();
 
     // دکمه‌های پایین
-    const footer = contentEl.createEl("div");
+    const footer = contentEl.createDiv();
     footer.setCssStyles({ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "16px" });
 
     const cancel = footer.createEl("button", { text: "انصراف" });
@@ -124,11 +124,11 @@ export class JalaliDatePickerModal extends Modal {
     const firstDay = new Date(firstG.gy, firstG.gm - 1, firstG.gd);
     const startOffset = (firstDay.getDay() + 1) % 7; // شنبه=0
 
-    for (let i = 0; i < startOffset; i++) grid.createEl("div");
+    for (let i = 0; i < startOffset; i++) grid.createDiv();
 
     for (let d = 1; d <= daysInMonth; d++) {
       const isSelected = d === this.jd;
-      const cell = grid.createEl("div", { text: String(d) });
+      const cell = grid.createDiv({ text: String(d) });
       cell.setCssStyles({
         padding: "8px", borderRadius: "8px", textAlign: "center", cursor: "pointer",
         background: isSelected ? "var(--interactive-accent)" : "var(--background-secondary)",

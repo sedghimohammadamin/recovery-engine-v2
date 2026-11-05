@@ -104,7 +104,7 @@ export class DashboardView extends ItemView {
       this.isRendering = false;
       if (this.pendingRender) {
         this.pendingRender = false;
-        setTimeout(() => this.refresh(), 10);
+        window.setTimeout(() => this.refresh(), 10);
       }
     }
   }
@@ -123,10 +123,10 @@ export class DashboardView extends ItemView {
     container.setAttr("dir", "rtl");
 
     // --- هدر ---
-    const header = container.createEl("div", { cls: "re-header" });
-    const titleWrap = header.createEl("div");
+    const header = container.createDiv({ cls: "re-header" });
+    const titleWrap = header.createDiv();
     titleWrap.setCssStyles({ display: "flex", alignItems: "center", gap: "10px" });
-    const iconEl = titleWrap.createEl("div");
+    const iconEl = titleWrap.createDiv();
     setIcon(iconEl, "calendar-check");
     iconEl.setCssStyles({ color: "var(--interactive-accent)", width: "24px", height: "24px" });
     titleWrap.createEl("h2", { text: this.plugin.settings.dashboardTitle });
@@ -143,7 +143,7 @@ export class DashboardView extends ItemView {
 
     // --- آمار ---
     if (this.plugin.settings.showStats) {
-      const stats = container.createEl("div", { cls: "re-stats" });
+      const stats = container.createDiv({ cls: "re-stats" });
       const cells: { label: string; n: number; icon: string; color: string }[] = [
         { label: "امروز", n: buckets.today.length, icon: "sun", color: "var(--text-accent)" },
         { label: "عقب‌افتاده", n: buckets.overdue.length, icon: "alert-circle", color: "var(--text-error)" },
@@ -152,20 +152,20 @@ export class DashboardView extends ItemView {
         { label: "کل مطالب", n: items.filter((i) => !i.archived).length, icon: "book-open", color: "var(--text-normal)" },
       ];
       cells.forEach(({ label, n, icon, color }) => {
-        const c = stats.createEl("div", { cls: "re-stat" });
-        const ic = c.createEl("div");
+        const c = stats.createDiv({ cls: "re-stat" });
+        const ic = c.createDiv();
         setIcon(ic, icon);
         ic.setCssStyles({ width: "28px", height: "28px", margin: "0 auto 8px", color });
-        c.createEl("div", { cls: "re-stat-num", text: String(n) });
-        c.createEl("div", { cls: "re-stat-label", text: label });
+        c.createDiv({ cls: "re-stat-num", text: String(n) });
+        c.createDiv({ cls: "re-stat-label", text: label });
       });
     }
 
     // --- فیلترها ---
-    const filterBar = container.createEl("div", { cls: "re-filter-bar" });
+    const filterBar = container.createDiv({ cls: "re-filter-bar" });
     filterBar.setCssStyles({ marginBottom: "16px", padding: "12px", background: "var(--background-secondary)", borderRadius: "12px", display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" });
 
-    const timeLabel = filterBar.createEl("span", { text: "زمان یادگیری:" });
+    const timeLabel = filterBar.createSpan({ text: "زمان یادگیری:" });
     timeLabel.setCssStyles({ fontSize: "12px", color: "var(--text-muted)" });
     const timeSelect = filterBar.createEl("select");
     timeSelect.setCssStyles({ padding: "6px 10px", borderRadius: "8px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "13px" });
@@ -175,9 +175,9 @@ export class DashboardView extends ItemView {
       { value: "desc", label: "جدید به قدیمی" },
     ].forEach(opt => timeSelect.createEl("option", { text: opt.label, value: opt.value }));
     timeSelect.value = this.sortTime;
-    timeSelect.onchange = () => { this.sortTime = timeSelect.value as any; this.refresh(); };
+    timeSelect.onchange = () => { this.sortTime = timeSelect.value as unknown; this.refresh(); };
 
-    const nameLabel = filterBar.createEl("span", { text: "نام مبحث:" });
+    const nameLabel = filterBar.createSpan({ text: "نام مبحث:" });
     nameLabel.setCssStyles({ fontSize: "12px", color: "var(--text-muted)" });
     const nameSelect = filterBar.createEl("select");
     nameSelect.setCssStyles({ padding: "6px 10px", borderRadius: "8px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "13px" });
@@ -187,7 +187,7 @@ export class DashboardView extends ItemView {
       { value: "desc", label: "برعکس (ی-أ)" },
     ].forEach(opt => nameSelect.createEl("option", { text: opt.label, value: opt.value }));
     nameSelect.value = this.sortName;
-    nameSelect.onchange = () => { this.sortName = nameSelect.value as any; this.refresh(); };
+    nameSelect.onchange = () => { this.sortName = nameSelect.value as unknown; this.refresh(); };
 
     // --- مرتب‌سازی ---
     buckets.today.sort((a, b) => {
@@ -240,7 +240,7 @@ export class DashboardView extends ItemView {
   // ✅ متد تقویم (شمسی)
   private async renderCalendar(container: HTMLElement) {
     const items = (await this.plugin.getItems()).filter(i => !i.deleted);
-    const itemsByDate = new Map<string, any[]>();
+    const itemsByDate = new Map<string, unknown[]>();
     for (const item of items) {
       if (!itemsByDate.has(item.learnedAt)) itemsByDate.set(item.learnedAt, []);
       itemsByDate.get(item.learnedAt)!.push(item);
@@ -251,7 +251,7 @@ export class DashboardView extends ItemView {
     calSection.createEl("h3", { text: "📅 تقویم مباحث" });
 
     // هدر تقویم
-    const calHeader = calSection.createEl("div", { cls: "re-cal-header" });
+    const calHeader = calSection.createDiv({ cls: "re-cal-header" });
     calHeader.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" });
 
     const prevBtn = calHeader.createEl("button", { text: "‹" });
@@ -272,12 +272,12 @@ export class DashboardView extends ItemView {
     };
 
     // شبکه تقویم
-    const grid = calSection.createEl("div", { cls: "re-cal-grid" });
+    const grid = calSection.createDiv({ cls: "re-cal-grid" });
     grid.setCssStyles({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" });
 
     const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
     weekDays.forEach(d => {
-      const cell = grid.createEl("div", { text: d });
+      const cell = grid.createDiv({ text: d });
       cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "6px", color: "var(--text-muted)", fontSize: "12px" });
     });
 
@@ -290,7 +290,7 @@ export class DashboardView extends ItemView {
     const startOffset = (firstDay.getDay() + 1) % 7; // شنبه=0
 
     for (let i = 0; i < startOffset; i++) {
-      grid.createEl("div", { cls: "re-cal-cell empty" });
+      grid.createDiv({ cls: "re-cal-cell empty" });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -298,7 +298,7 @@ export class DashboardView extends ItemView {
       const iso = `${gd.gy}-${String(gd.gm).padStart(2, "0")}-${String(gd.gd).padStart(2, "0")}`;
       
       const dayItems = itemsByDate.get(iso) || [];
-      const cell = grid.createEl("div", { cls: "re-cal-cell" });
+      const cell = grid.createDiv({ cls: "re-cal-cell" });
       cell.setCssStyles({
         minHeight: "60px",
         padding: "4px",
@@ -312,25 +312,25 @@ export class DashboardView extends ItemView {
         position: "relative"
       });
 
-      const dayNum = cell.createEl("div", { text: String(d) });
+      const dayNum = cell.createDiv({ text: String(d) });
       dayNum.setCssStyles({ fontWeight: "bold", fontSize: "13px" });
 
       if (dayItems.length > 0) {
-        const badge = cell.createEl("div", { text: String(dayItems.length) });
+        const badge = cell.createDiv({ text: String(dayItems.length) });
         badge.setCssStyles({ fontSize: "10px", background: "var(--interactive-accent)", color: "white", padding: "1px 5px", borderRadius: "8px", alignSelf: "flex-start" });
 
         cell.onclick = () => {
           const existing = calSection.querySelector(".re-cal-details");
           if (existing) existing.remove();
           
-          const box = calSection.createEl("div", { cls: "re-cal-details" });
+          const box = calSection.createDiv({ cls: "re-cal-details" });
           box.setCssStyles({ marginTop: "12px", padding: "12px", background: "var(--background-secondary)", borderRadius: "8px" });
           box.createEl("h4", { text: `مباحث روز ${d} ${monthNames[this.calMonth - 1]} (${dayItems.length})` });
           const table = box.createEl("table", { cls: "re-table" });
           const head = table.createEl("tr");
           ["عنوان مبحث", "درس", "عملیات"].forEach(h => head.createEl("th", { text: h }));
           for (const item of dayItems) {
-            const subject = this.plugin.settings.subjects.find((s: any) => s.id === item.subjectId);
+            const subject = this.plugin.settings.subjects.find((s: unknown) => s.id === item.subjectId);
             const row = table.createEl("tr");
             row.createEl("td", { text: item.title });
             row.createEl("td", { text: subject?.name ?? "—" });
@@ -367,7 +367,7 @@ export class DashboardView extends ItemView {
     new Notice("فایل منبع پیدا نشد.");
   }
 
-  private renderSection(container: HTMLElement, title: string, rows: any[], kind: string) {
+  private renderSection(container: HTMLElement, title: string, rows: unknown[], kind: string) {
     const sec = container.createEl("section", { cls: "re-section" });
     sec.createEl("h3", { text: `${title} (${rows.length})` });
     
@@ -376,7 +376,7 @@ export class DashboardView extends ItemView {
       return;
     }
 
-    const grouped: Record<string, any[]> = {};
+    const grouped: Record<string, unknown[]> = {};
     for (const r of rows.slice(0, this.plugin.settings.dashboardListLimit)) {
       const subjId = r.item.subjectId;
       if (!grouped[subjId]) grouped[subjId] = [];
@@ -387,10 +387,10 @@ export class DashboardView extends ItemView {
       const subject = this.plugin.settings.subjects.find((s) => s.id === subjId);
       const subjectName = subject?.name ?? "بدون درس";
 
-      const subSec = sec.createEl("div", { cls: "re-subject-group" });
+      const subSec = sec.createDiv({ cls: "re-subject-group" });
       subSec.setCssStyles({ marginTop: "12px", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", overflow: "hidden" });
 
-      const subHeader = subSec.createEl("div", { cls: "re-subject-header" });
+      const subHeader = subSec.createDiv({ cls: "re-subject-header" });
       subHeader.setCssStyles({ padding: "8px 12px", background: "var(--background-secondary)", borderBottom: "1px solid var(--background-modifier-border)", fontWeight: "700", color: "var(--text-accent)", fontSize: "13px" });
       subHeader.textContent = `${subjectName} (${subjRows.length} مرور)`;
 
@@ -435,7 +435,7 @@ export class DashboardView extends ItemView {
           btn.onclick = () =>
             new ChecklistModal(this.app, this.plugin, r.item, r.review, async (cl) => {
               markCompleted(r.item, r.review.id);
-              const rev = r.item.reviews.find((x: any) => x.id === r.review.id);
+              const rev = r.item.reviews.find((x: unknown) => x.id === r.review.id);
               if (rev) rev.checklistDone = cl;
               await this.plugin.saveItem(r.item);
               new Notice("مرور ثبت شد.");

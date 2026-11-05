@@ -9,10 +9,10 @@ export function openVaultUri(vaultId: string): void {
 
   if (Platform.isDesktopApp) {
     try {
-      const req = (window as any).require;
+      const req = (window as unknown).require;
       if (typeof req === "function") {
         const { exec } = req("child_process");
-        exec(`open "${uri}"`, (err: any) => {
+        exec(`open "${uri}"`, (err: unknown) => {
           if (err) {
             console.error("[RecoveryEngine] open vault error:", err);
             new Notice("خطا در باز کردن والت.");

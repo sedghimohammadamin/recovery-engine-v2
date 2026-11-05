@@ -44,7 +44,7 @@ export function renderJalaliCalendar(
   }
 
   // --- هدر ---
-  const header = container.createEl("div", { cls: "re-cal-header" });
+  const header = container.createDiv({ cls: "re-cal-header" });
   header.setCssStyles({ 
     display: "flex", justifyContent: "space-between", alignItems: "center", 
     marginBottom: "8px", padding: "4px 8px", background: "var(--background-primary)", 
@@ -75,12 +75,12 @@ export function renderJalaliCalendar(
   }
 
   // --- شبکه ---
-  const grid = container.createEl("div", { cls: "re-cal-grid" });
+  const grid = container.createDiv({ cls: "re-cal-grid" });
   grid.setCssStyles({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" });
 
   const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
   weekDays.forEach(d => {
-    const cell = grid.createEl("div", { text: d });
+    const cell = grid.createDiv({ text: d });
     cell.setCssStyles({ textAlign: "center", fontWeight: "bold", padding: "6px", color: "var(--text-muted)", fontSize: "11px" });
   });
 
@@ -89,7 +89,7 @@ export function renderJalaliCalendar(
   const firstDay = new Date(firstG.gy, firstG.gm - 1, firstG.gd);
   const startOffset = (firstDay.getDay() + 1) % 7; // شنبه=0
 
-  for (let i = 0; i < startOffset; i++) grid.createEl("div");
+  for (let i = 0; i < startOffset; i++) grid.createDiv();
 
   for (let d = 1; d <= daysInMonth; d++) {
     const g = toGregorian(app, currentYear, currentMonth, d);
@@ -97,7 +97,7 @@ export function renderJalaliCalendar(
     const dayReviews = reviewsByDate.get(iso) || [];
 
     const inRange = (!options.rangeStart || iso >= options.rangeStart) && (!options.rangeEnd || iso <= options.rangeEnd);
-    const cell = grid.createEl("div", { cls: "re-cal-cell" });
+    const cell = grid.createDiv({ cls: "re-cal-cell" });
     
     let bgColor = "var(--background-secondary)";
     let borderColor = "var(--background-modifier-border)";
@@ -134,11 +134,11 @@ export function renderJalaliCalendar(
       position: "relative",
     });
 
-    const dayNum = cell.createEl("div", { text: String(d) });
+    const dayNum = cell.createDiv({ text: String(d) });
     dayNum.setCssStyles({ fontWeight: "bold" });
 
     if (dayReviews.length > 0) {
-      const badge = cell.createEl("div", { text: String(dayReviews.length) });
+      const badge = cell.createDiv({ text: String(dayReviews.length) });
       badge.setCssStyles({ fontSize: "10px", opacity: "0.9", alignSelf: "flex-start" });
       
       const tooltipLines = dayReviews.map(r => `${KIND_LABELS[r.kind] || "مرور"}: ${r.label}`);
@@ -159,13 +159,13 @@ export function renderJalaliCalendar(
   }
 
   // --- افسانه ---
-  const legend = container.createEl("div", { cls: "re-cal-legend" });
+  const legend = container.createDiv({ cls: "re-cal-legend" });
   legend.setCssStyles({ display: "flex", gap: "12px", marginTop: "8px", flexWrap: "wrap", fontSize: "11px" });
   for (const [kind, label] of Object.entries(KIND_LABELS)) {
-    const item = legend.createEl("div");
+    const item = legend.createDiv();
     item.setCssStyles({ display: "flex", alignItems: "center", gap: "4px" });
-    const dot = item.createEl("div");
+    const dot = item.createDiv();
     dot.setCssStyles({ width: "12px", height: "12px", borderRadius: "3px", background: KIND_COLORS[kind] });
-    item.createEl("span", { text: label });
+    item.createSpan({ text: label });
   }
 }

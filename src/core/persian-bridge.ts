@@ -92,7 +92,7 @@ export interface PersianCalendarApi {
 
 export function getPersianCalendarApi(app: App): PersianCalendarApi | null {
   try {
-    const plugins = (app as any).plugins;
+    const plugins = (app as unknown).plugins;
     if (!plugins?.getPlugin) return null;
     const pc = plugins.getPlugin("persian-calendar");
     const api = pc?.api;
@@ -109,7 +109,7 @@ export function toJalali(app: App, gy: number, gm: number, gd: number): { jy: nu
   const api = getPersianCalendarApi(app);
   if (api) {
     try {
-      const res: any = api.gregorianToJalali(gy, gm, gd);
+      const res: unknown = api.gregorianToJalali(gy, gm, gd);
       if (res) {
         const jy = Number(res.jy !== undefined ? res.jy : res.year);
         const jm = Number(res.jm !== undefined ? res.jm : res.month);
@@ -125,7 +125,7 @@ export function toGregorian(app: App, jy: number, jm: number, jd: number): { gy:
   const api = getPersianCalendarApi(app);
   if (api) {
     try {
-      const res: any = api.jalaliToGregorian(jy, jm, jd);
+      const res: unknown = api.jalaliToGregorian(jy, jm, jd);
       if (res) {
         const gy = Number(res.gy !== undefined ? res.gy : res.year);
         const gm = Number(res.gm !== undefined ? res.gm : res.month);
@@ -173,7 +173,7 @@ export function isoToJalaliString(app: App, isoDate: string): string {
 }
 
 export function jalaliStringToIso(app: App, jalaliStr: string): string | null {
-  const parts = jalaliStr.trim().split(/[\/\-]/).map(Number);
+  const parts = jalaliStr.trim().split(/[/-]/).map(Number);
   if (parts.length !== 3 || parts.some(isNaN)) return null;
   const [jy, jm, jd] = parts;
   const g = toGregorian(app, jy, jm, jd);

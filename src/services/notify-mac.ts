@@ -25,7 +25,7 @@ export function sendMacNotificationWithActions(
   if (!Platform.isMacOS) return; // فعلاً فقط مک
 
   try {
-    const req = (window as any).require;
+    const req = (window as unknown).require;
     if (typeof req !== "function") {
       console.error("[RecoveryEngine] window.require در دسترس نیست");
       new Notice("خطا: alerter اجرا نشد.");
@@ -36,7 +36,7 @@ export function sendMacNotificationWithActions(
     const binPath = "/opt/homebrew/bin/alerter";
     const cmd = `"${binPath}" --title "${title}" --message "${body}" --actions "${actionList}"`;
 
-    exec(cmd, (err: any, stdout: string, stderr: string) => {
+    exec(cmd, (err: unknown, stdout: string, stderr: string) => {
       if (err) {
         console.error("[RecoveryEngine] alerter error:", err);
         return;

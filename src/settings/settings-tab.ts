@@ -13,12 +13,12 @@ export class RecoverySettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.setAttr("dir", "rtl");
-    containerEl.createEl("h1", { text: "تنظیمات موتور بازیابی" });
+    new Setting(containerEl).setName("تنظیمات موتور بازیابی").setHeading();
 
     const s = this.plugin.settings;
 
     // ========== عمومی ==========
-    containerEl.createEl("h2", { text: "عمومی" });
+    new Setting(containerEl).setName("عمومی").setHeading();
     new Setting(containerEl).setName("عنوان داشبورد").addText((t) =>
       t.setValue(s.dashboardTitle).onChange(async (v) => { s.dashboardTitle = v; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); })
     );
@@ -30,15 +30,15 @@ export class RecoverySettingsTab extends PluginSettingTab {
     );
 
     // ========== نمایش تاریخ ==========
-    containerEl.createEl("h2", { text: "نمایش تاریخ" });
+    new Setting(containerEl).setName("نمایش تاریخ").setHeading();
     new Setting(containerEl).setName("فرمت تاریخ").addDropdown((d) => {
       d.addOption("gregorian", "میلادی"); d.addOption("jalali", "شمسی");
-      d.setValue(s.dateFormat).onChange(async (v) => { s.dateFormat = v as any; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); });
+      d.setValue(s.dateFormat).onChange(async (v) => { s.dateFormat = v as unknown; await this.plugin.saveSettings(); this.plugin.refreshDashboards(); });
     });
 
     // ========== درس‌ها ==========
-    containerEl.createEl("h2", { text: "درس‌ها" });
-    const subjectsWrapper = containerEl.createEl("div", { cls: "re-subjects-section" });
+    new Setting(containerEl).setName("درس‌ها").setHeading();
+    const subjectsWrapper = containerEl.createDiv({ cls: "re-subjects-section" });
     
     const renderSubjects = () => {
       subjectsWrapper.empty();
@@ -56,17 +56,17 @@ export class RecoverySettingsTab extends PluginSettingTab {
     );
 
     // ========== چرخه‌های مرور ==========
-    containerEl.createEl("h2", { text: "چرخه‌های مرور" });
+    new Setting(containerEl).setName("چرخه‌های مرور").setHeading();
     containerEl.createEl("p", { text: "هر چرخه در یک باکس جداگانه است. با دکمه‌های داخل هر باکس، تعداد مرورها را تنظیم کنید.", cls: "setting-item-description" });
 
-    const cyclesWrapper = containerEl.createEl("div", { cls: "re-cycles-wrapper" });
+    const cyclesWrapper = containerEl.createDiv({ cls: "re-cycles-wrapper" });
     this.renderCycleBox(cyclesWrapper, "initial", "مرورهای اولیه");
     this.renderCycleBox(cyclesWrapper, "weekend", "مرورهای هفتگی");
     this.renderCycleBox(cyclesWrapper, "monthly", "مرورهای ماهانه");
     this.renderCycleBox(cyclesWrapper, "longterm", "مرورهای بلندمدت");
 
     // ========== اعلان‌ها ==========
-    containerEl.createEl("h2", { text: "اعلان‌ها" });
+    new Setting(containerEl).setName("اعلان‌ها").setHeading();
     new Setting(containerEl).setName("اعلان هنگام باز شدن").addToggle((t) =>
       t.setValue(s.notifyOnStartup).onChange(async (v) => { s.notifyOnStartup = v; await this.plugin.saveSettings(); })
     );
@@ -75,13 +75,13 @@ export class RecoverySettingsTab extends PluginSettingTab {
     );
 
     // ========== داده‌ها ==========
-    containerEl.createEl("h2", { text: "داده‌ها" });
+    new Setting(containerEl).setName("داده‌ها").setHeading();
     new Setting(containerEl).setName("خروجی گرفتن").addButton((b) =>
       b.setButtonText("دانلود پشتیبان").onClick(async () => {
         const data = await this.plugin.exportData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = `recovery-engine-backup-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
+        const a = createEl("a"); a.href = url; a.download = `recovery-engine-backup-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
         new Notice("پشتیبان دانلود شد.");
       })
     );
@@ -135,10 +135,10 @@ export class RecoverySettingsTab extends PluginSettingTab {
   // ========== باکس هر چرخه ==========
   private renderCycleBox(wrapper: HTMLElement, kind: string, title: string) {
     const s = this.plugin.settings;
-    const list = (s.schedule as any)[kind];
+    const list = (s.schedule as unknown)[kind];
 
     // ساخت باکس
-    const box = wrapper.createEl("div", { cls: "re-cycle-box" });
+    const box = wrapper.createDiv({ cls: "re-cycle-box" });
     box.setCssStyles({
       padding: "16px",
       background: "var(--background-secondary)",
@@ -148,14 +148,13 @@ export class RecoverySettingsTab extends PluginSettingTab {
     });
 
     // هدر باکس: عنوان + سوییچ
-    const header = box.createEl("div");
+    const header = box.createDiv();
     header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" });
-    header.createEl("h3", { text: title });
-    header.querySelector("h3")!.setCssStyles({ margin: "0", fontSize: "16px" });
+    new Setting(header).setName(title).setHeading();
 
     const toggleLabel = header.createEl("label");
     toggleLabel.setCssStyles({ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" });
-    toggleLabel.createEl("span", { text: list.enabled ? "فعال" : "غیرفعال" });
+    toggleLabel.createSpan({ text: list.enabled ? "فعال" : "غیرفعال" });
     const toggle = toggleLabel.createEl("input");
     toggle.type = "checkbox";
     toggle.checked = list.enabled;
@@ -174,9 +173,9 @@ export class RecoverySettingsTab extends PluginSettingTab {
 
     // فیلد روز تجمیع (فقط برای ماهانه)
     if (kind === "monthly") {
-      const row = box.createEl("div");
+      const row = box.createDiv();
       row.setCssStyles({ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", padding: "8px", background: "var(--background-primary)", borderRadius: "8px" });
-      row.createEl("span", { text: "روز تجمیع در ماه:", style: "font-size: 13px;" });
+      row.createSpan({ text: "روز تجمیع در ماه:", style: "font-size: 13px;" });
       const dayInput = row.createEl("input");
       dayInput.type = "number";
       dayInput.min = "1";
@@ -193,11 +192,11 @@ export class RecoverySettingsTab extends PluginSettingTab {
     }
 
     // لیست مرورها (فشرده)
-    const listEl = box.createEl("div");
+    const listEl = box.createDiv();
     listEl.setCssStyles({ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" });
 
     for (let i = 0; i < list.count; i++) {
-      const row = listEl.createEl("div");
+      const row = listEl.createDiv();
       row.setCssStyles({
         display: "flex",
         alignItems: "center",
@@ -208,7 +207,7 @@ export class RecoverySettingsTab extends PluginSettingTab {
         border: "1px solid var(--background-modifier-border)",
       });
 
-      row.createEl("span", { text: `مرور ${i + 1}`, style: "font-size: 13px; min-width: 60px;" });
+      row.createSpan({ text: `مرور ${i + 1}`, style: "font-size: 13px; min-width: 60px;" });
 
       const select = row.createEl("select");
       select.setCssStyles({ flex: "1", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" });
@@ -307,7 +306,7 @@ export class RecoverySettingsTab extends PluginSettingTab {
   }
 
   private renderSubject(container: HTMLElement, subj: Subject, idx: number) {
-    const box = container.createEl("div", { cls: "re-cycle-box" });
+    const box = container.createDiv({ cls: "re-cycle-box" });
     box.setCssStyles({
       padding: "16px",
       background: "var(--background-secondary)",
@@ -317,7 +316,7 @@ export class RecoverySettingsTab extends PluginSettingTab {
     });
 
     // هدر: نام درس و دکمه حذف
-    const header = box.createEl("div");
+    const header = box.createDiv();
     header.setCssStyles({ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" });
 
     const nameInput = header.createEl("input");
@@ -339,7 +338,7 @@ export class RecoverySettingsTab extends PluginSettingTab {
     };
 
     // سوییچ بایگانی
-    const archiveRow = box.createEl("div");
+    const archiveRow = box.createDiv();
     archiveRow.setCssStyles({ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" });
     const archiveCb = archiveRow.createEl("input", { type: "checkbox" });
     archiveCb.checked = subj.archived;
@@ -347,18 +346,18 @@ export class RecoverySettingsTab extends PluginSettingTab {
       subj.archived = archiveCb.checked;
       await this.plugin.saveSettings();
     };
-    archiveRow.createEl("span", { text: "بایگانی شده (در فرم ثبت مطلب نمایش داده نشود)", style: "font-size: 12px; color: var(--text-muted);" });
+    archiveRow.createSpan({ text: "بایگانی شده (در فرم ثبت مطلب نمایش داده نشود)", style: "font-size: 12px; color: var(--text-muted);" });
 
     // بخش چک‌لیست
-    box.createEl("div", { text: "چک‌لیست مرور:", style: "font-size: 13px; font-weight: 600; margin-bottom: 8px; margin-top: 8px;" });
+    box.createDiv({ text: "چک‌لیست مرور:", style: "font-size: 13px; font-weight: 600; margin-bottom: 8px; margin-top: 8px;" });
     
-    const checklistWrapper = box.createEl("div");
+    const checklistWrapper = box.createDiv();
     checklistWrapper.setCssStyles({ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" });
 
     const renderChecklist = () => {
       checklistWrapper.empty();
       subj.checklist.forEach((item, itemIdx) => {
-        const row = checklistWrapper.createEl("div");
+        const row = checklistWrapper.createDiv();
         row.setCssStyles({
           display: "flex", alignItems: "center", gap: "8px",
           padding: "6px 10px", background: "var(--background-primary)",

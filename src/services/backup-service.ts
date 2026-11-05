@@ -49,10 +49,10 @@ export async function importBackupFromFile(
   }
 
   // ایجاد المان فایل با الصاق به صفحه تا در Obsidian / Electron بدون مشکل باز شود
-  const input = document.createElement("input");
+  const input = createEl("input");
   input.type = "file";
   input.accept = ".json,application/json";
-  input.style.display = "none";
+  input.setCssStyles({ display: "none" });
   document.body.appendChild(input);
   input.onchange = async () => {
     const f = input.files?.[0];

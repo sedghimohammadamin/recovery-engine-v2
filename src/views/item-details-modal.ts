@@ -62,7 +62,7 @@ export class ItemDetailsModal extends Modal {
     });
 
     // ۲. ساخت wrapper اصلی
-    const wrapper = modalEl.createEl("div");
+    const wrapper = modalEl.createDiv();
     wrapper.setCssStyles({
       display: "flex",
       flexDirection: "column",
@@ -72,7 +72,7 @@ export class ItemDetailsModal extends Modal {
     });
 
     // ۳. بخش محتوا (اسکرول‌شونده)
-    const body = wrapper.createEl("div", { cls: "re-detail-content" });
+    const body = wrapper.createDiv({ cls: "re-detail-content" });
     body.setCssStyles({
       flex: "1",
       overflowY: "auto",
@@ -81,7 +81,7 @@ export class ItemDetailsModal extends Modal {
     });
 
     // ۴. فوتر ثابت (بیرون از اسکرول)
-    const footer = wrapper.createEl("div", { cls: "re-detail-footer" });
+    const footer = wrapper.createDiv({ cls: "re-detail-footer" });
     footer.setCssStyles({
       padding: "16px 24px",
       background: "var(--background-secondary)",
@@ -93,7 +93,7 @@ export class ItemDetailsModal extends Modal {
     });
 
     // ۵. دستگیرهٔ ریسایز
-    const handle = modalEl.createEl("div", { cls: "re-resize-handle" });
+    const handle = modalEl.createDiv({ cls: "re-resize-handle" });
     let resizing = false;
     let startX = 0, startY = 0, startW = 0, startH = 0;
 
@@ -124,7 +124,7 @@ export class ItemDetailsModal extends Modal {
 
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
-    (this as any)._cleanupResize = () => {
+    (this as unknown)._cleanupResize = () => {
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
     };
@@ -137,14 +137,14 @@ export class ItemDetailsModal extends Modal {
     });
 
     if (this.item.source) {
-      const row = body.createEl("div", { cls: "re-source-row" });
-      row.createEl("span", { text: "منبع:" });
+      const row = body.createDiv({ cls: "re-source-row" });
+      row.createSpan({ text: "منبع:" });
       const openBtn = row.createEl("button", { text: "باز کردن" });
       openBtn.onclick = () => this.openSource(this.item.source);
     }
 
-    const rangeFrom = (this.item as any).rangeFrom ?? "";
-    const rangeTo = (this.item as any).rangeTo ?? "";
+    const rangeFrom = (this.item as unknown).rangeFrom ?? "";
+    const rangeTo = (this.item as unknown).rangeTo ?? "";
     if (rangeFrom || rangeTo) {
       body.createEl("p", { text: `محدوده: ${rangeFrom || "?"} تا ${rangeTo || "?"}` });
     }
