@@ -1,17 +1,17 @@
 /* پدینگ صفحه اصلی و جلوگیری از تداخل */
 .workspace-leaf-content[data-type="recovery-engine-dashboard"] .view-content,
 .recovery-engine-dashboard {
-  direction: rtl !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 24px !important;
-  padding: 24px 32px !important; /* پدینگ استاندارد و منظم */
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  background: var(--background-primary) !important;
-  min-height: 100% !important;
-  width: 100% !important;
-  overflow-y: auto !important;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 32px; /* پدینگ استاندارد و منظم */
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--background-primary);
+  min-height: 100%;
+  width: 100%;
+  overflow-y: auto;
 }
 
 /* --- هدر --- */
@@ -31,12 +31,12 @@
 }
 
 .re-header button {
-  background: var(--interactive-accent) !important;
-  color: var(--text-on-accent) !important;
-  border: none !important;
-  padding: 10px 20px !important;
-  border-radius: 12px !important;
-  font-weight: 700 !important;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
 }
@@ -45,16 +45,16 @@
 .re-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px !important;
+  gap: 16px;
 }
 
 .re-stat {
-  background: var(--background-secondary) !important;
-  padding: 24px 16px !important; /* پدینگ داخلی */
-  border-radius: 16px !important;
-  border: 1px solid var(--background-modifier-border) !important;
+  background: var(--background-secondary);
+  padding: 24px 16px; /* پدینگ داخلی */
+  border-radius: 16px;
+  border: 1px solid var(--background-modifier-border);
   text-align: center;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 .re-stat-num {
@@ -72,15 +72,15 @@
 
 /* --- بخش‌ها (سکشن‌ها) --- */
 .re-section {
-  background: var(--background-primary) !important;
-  border-radius: 16px !important;
-  padding: 24px !important; /* پدینگ داخلی سکشن */
-  border: 1px solid var(--background-modifier-border) !important;
-  box-sizing: border-box !important;
+  background: var(--background-primary);
+  border-radius: 16px;
+  padding: 24px; /* پدینگ داخلی سکشن */
+  border: 1px solid var(--background-modifier-border);
+  box-sizing: border-box;
 }
 
 .re-section h3 {
-  margin: 0 0 20px !important;
+  margin: 0 0 20px;
   font-size: 18px;
   font-weight: 800;
   color: var(--text-normal);
@@ -92,7 +92,7 @@
 }
 
 .re-empty {
-  padding: 32px !important;
+  padding: 32px;
   text-align: center;
   color: var(--text-faint);
   background: var(--background-secondary);
@@ -103,14 +103,14 @@
 /* --- باکس فیلتر --- */
 .re-filter-bar {
   display: flex;
-  gap: 16px !important;
-  padding: 16px 24px !important; /* پدینگ چپ و راست و بالا و پایین */
-  background: var(--background-secondary) !important;
-  border-radius: 16px !important;
-  border: 1px solid var(--background-modifier-border) !important;
+  gap: 16px;
+  padding: 16px 24px; /* پدینگ چپ و راست و بالا و پایین */
+  background: var(--background-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--background-modifier-border);
   align-items: center;
   flex-wrap: wrap;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 .re-filter-bar span {
@@ -121,11 +121,11 @@
 
 .re-filter-bar select,
 .re-filter-bar input {
-  padding: 8px 12px !important;
-  border-radius: 8px !important;
-  border: 1px solid var(--background-modifier-border) !important;
-  background: var(--background-primary) !important;
-  color: var(--text-normal) !important;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
   font-size: 13px;
   outline: none;
 }
@@ -139,7 +139,7 @@
 }
 
 .re-subject-header {
-  padding: 12px 16px !important;
+  padding: 12px 16px;
   background: var(--background-secondary);
   border-bottom: 1px solid var(--background-modifier-border);
   font-weight: 800;
@@ -150,12 +150,12 @@
 .re-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto !important;
+  table-layout: auto;
   font-size: 14px;
 }
 
 .re-table th {
-  padding: 12px 10px !important;
+  padding: 12px 10px;
   text-align: right;
   color: var(--text-muted);
   font-size: 12px;
@@ -165,47 +165,47 @@
 }
 
 .re-table td {
-  padding: 12px 10px !important;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--background-modifier-border);
   color: var(--text-normal);
 }
 
 .re-table th:last-child,
 .re-table td:last-child {
-  min-width: 240px !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
+  min-width: 240px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .re-table td:last-child {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  border-bottom: 1px solid var(--background-modifier-border) !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .re-table button {
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  border: 1px solid var(--background-modifier-border) !important;
-  background: var(--background-primary) !important;
-  color: var(--text-normal) !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  white-space: nowrap !important;
+  white-space: nowrap;
   margin-left: 6px;
 }
 
 .re-table button:hover {
-  background: var(--interactive-accent) !important;
-  color: var(--text-on-accent) !important;
-  border-color: var(--interactive-accent) !important;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
 }
 
 /* =========================================
-   تقویم (بدون !important در رنگ‌ها)
+   تقویم (بدون در رنگ‌ها)
    ========================================= */
 
 .re-cal-container {
@@ -216,11 +216,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px !important;
-  padding: 12px 16px !important;
-  background: var(--background-secondary) !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--background-modifier-border) !important;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
 }
 
 .re-cal-header h4 {
@@ -232,24 +232,24 @@
 .re-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px !important; /* فاصله بین سلول‌ها */
+  gap: 8px; /* فاصله بین سلول‌ها */
 }
 
 .re-cal-cell {
   min-height: 64px;
-  padding: 8px !important;
-  border-radius: 12px !important;
+  padding: 8px;
+  border-radius: 12px;
   /* رنگ پس‌زمینه توسط کد JS اعمال می‌شود، اینجا ست نمی‌کنیم */
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 .re-cal-cell.empty {
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
 }
 
 .re-cal-legend {
@@ -296,12 +296,12 @@
 
 .re-cycle-box,
 .re-subject-box {
-  padding: 20px !important; /* پدینگ داخلی باکس */
-  margin-bottom: 20px !important; /* مارجین بین باکس‌ها */
-  background: var(--background-secondary) !important;
-  border: 1px solid var(--background-modifier-border) !important;
-  border-radius: 16px !important;
-  box-sizing: border-box !important;
+  padding: 20px; /* پدینگ داخلی باکس */
+  margin-bottom: 20px; /* مارجین بین باکس‌ها */
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 16px;
+  box-sizing: border-box;
 }
 
 /* =========================================
@@ -311,42 +311,42 @@
 .re-add-modal,
 .re-checklist-modal,
 .re-detail-modal {
-  border-radius: 16px !important;
-  overflow: hidden !important;
-  background: var(--background-primary) !important;
-  border: 1px solid var(--background-modifier-border) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  max-height: 85vh !important;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
 }
 
 .re-add-content,
 .re-checklist-content,
 .re-detail-content {
-  padding: 24px !important;
+  padding: 24px;
   direction: rtl;
-  overflow-y: auto !important; /* اسکرول */
-  flex: 1 !important;
+  overflow-y: auto; /* اسکرول */
+  flex: 1;
 }
 
 .re-checklist-footer {
-  padding: 16px 24px !important;
-  background: var(--background-secondary) !important;
-  border-top: 1px solid var(--background-modifier-border) !important;
+  padding: 16px 24px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  flex-shrink: 0 !important;
+  flex-shrink: 0;
 }
 
 .re-datepicker-modal {
-  border-radius: 16px !important;
-  overflow: hidden !important;
-  background: var(--background-primary) !important;
-  border: 1px solid var(--background-modifier-border) !important;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
 }
 
 .re-datepicker-content {
-  padding: 24px !important;
+  padding: 24px;
   direction: rtl;
 }
