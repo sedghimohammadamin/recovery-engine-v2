@@ -9,6 +9,7 @@ export interface CalendarOptions {
   rangeStart?: string;
   rangeEnd?: string;
   onMonthChange?: (year: number, month: number) => void;
+  completedMode?: boolean;
 }
 
 export function renderJalaliCalendar(
@@ -107,9 +108,25 @@ export function renderJalaliCalendar(
     
     if (dayReviews.length > 0) {
       const firstKind = dayReviews[0].kind;
-      bgColor = KIND_COLORS[firstKind] || bgColor;
-      borderColor = KIND_COLORS[firstKind] || borderColor;
-      textColor = "white";
+      const color = KIND_COLORS[firstKind] || "#3b82f6";
+      
+      if (options.completedMode) {
+        // انجام‌شده = فیل (پر)، انجام‌نشده = استروک (خالی)
+        const allCompleted = dayReviews.every(r => r.completed);
+        if (allCompleted) {
+          bgColor = color;
+          borderColor = color;
+          textColor = "white";
+        } else {
+          bgColor = "transparent";
+          borderColor = color;
+          textColor = color;
+        }
+      } else {
+        bgColor = color;
+        borderColor = color;
+        textColor = "white";
+      }
       cursor = "help";
     } else if (!inRange) {
       bgColor = "transparent";

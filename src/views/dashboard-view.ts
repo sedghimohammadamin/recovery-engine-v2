@@ -344,7 +344,10 @@ export class DashboardView extends ItemView {
   }
 
   private async openSourceInCurrentPane(src: string, blockId?: string) {
-    if (blockId) src += `#^${blockId}`;
+    // ساخت لینک با ترکیب %23%5E (یعنی #^) برای بلاک‌آیدی
+    if (blockId) {
+      src = `${src}%23%5E${blockId}`;
+    }
     const clean = src.trim();
     if (!clean) return;
     const file = this.app.vault.getAbstractFileByPath(clean);
